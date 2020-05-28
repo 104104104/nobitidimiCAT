@@ -22,8 +22,8 @@ var touchFlug = false;
 //画像
 var ASSETS = {
     image: {
-        'scrapSuzume': '/Users/yoshidatoshinobu/Documents/source/desertAndJonathan/ver1/scrapSuzume.png',
-        'jonathan': '/Users/yoshidatoshinobu/Documents/source/desertAndJonathan/ver1/janathan.png',
+        'scrapSuzume': './scrapSuzume.png',
+        'jonathan': './janathan.png',
     },
 };
 
