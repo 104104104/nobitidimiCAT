@@ -6,7 +6,8 @@ phina.globalize(); // おまじない(phina.jsをグローバルに展開)
 
 
 // 定数
-const RECTANGLE_DIAMETER = 60; // 正方形の一辺の長さ
+const SUZUME_DIAMETER = 120; // スクラップ雀の大きさ
+const JONATHAN_DIAMETER = 150; // 正方形の一辺の長さ
 const DISPLAY_WIDTH = 640; // ゲーム画面の横幅
 const DISPLAY_HEIGHT = 960; // ゲーム画面の縦幅
 const ONE_SECOND_FPS = 30; //ゲーム画面を、一秒間に何回更新するか
@@ -16,44 +17,60 @@ var SCORE = 0; //スコアはグローバルで管理する(その方が簡単�
 //jonathanで使う、グローバル変数
 var before_p_x = 0;
 var before_p_y = 0;
+var touchFlug = false;
 
+//画像
+var ASSETS = {
+    image: {
+        'scrapSuzume': '/Users/yoshidatoshinobu/Documents/source/desertAndJonathan/ver1/scrapSuzume.png',
+        'jonathan': '/Users/yoshidatoshinobu/Documents/source/desertAndJonathan/ver1/janathan.png',
+    },
+};
 
 /*
  * 自分の機体(ジョナサン)の定義
  */
 phina.define('Jona', {
-    superClass: 'TriangleShape',
+    superClass: 'Sprite',
 
     //初期化
     init: function(options) {
-        this.superInit(); //初期化のおまじない
+        this.superInit('jonathan'); //初期化のおまじない
 
         this.fill = 'blue'; // 四角の塗りつぶし色
-        this.stroke = 'red'; // 四角のふちの色
+        this.stroke = 'yello'; // 四角のふちの色
         this.x = DISPLAY_WIDTH / 2;
         this.y = DISPLAY_HEIGHT * 2 / 3;
-        this.width = RECTANGLE_DIAMETER; //四角の縦幅
-        this.height = RECTANGLE_DIAMETER; //四角の横幅
+        this.width = JONATHAN_DIAMETER; //四角の縦幅
+        this.height = JONATHAN_DIAMETER; //四角の横幅
     },
 
     //毎フレームごとに、どうふるまうか
+    //ジョナサンは、タッチしている指の相対位置で動く。画面外には出ない。
     update: function(app) {
         const p = app.pointer;
         const diffx = p.x - before_p_x;
         const diffy = p.y - before_p_y;
-        if (app.frame >= 2) {
-            console.log(p.x, p.y);
-            if (p.getPointing()) {
-                if (0 <= this.x + diffx <= DISPLAY_WIDTH) {
-                    this.x += diffx;
+        if (p.getPointing()) {
+            if (touchFlug) {
+                this.x += diffx;
+                if (this.x <= 0) {
+                    this.x = 0;
                 }
-                if (0 <= this.y + diffy <= DISPLAY_HEIGHT) {
-                    this.y += diffy;
+                if (DISPLAY_WIDTH <= this.x) {
+                    this.x = DISPLAY_WIDTH;
+                }
+                this.y += diffy;
+                if (this.y <= 0) {
+                    this.y = 0;
+                }
+                if (DISPLAY_HEIGHT <= this.y) {
+                    this.y = DISPLAY_HEIGHT;
                 }
             }
-            //var speed = 0;
-
-            //this.x += speed;
+            touchFlug = true;
+        } else {
+            touchFlug = false;
         }
         before_p_x = p.x;
         before_p_y = p.y;
@@ -62,19 +79,17 @@ phina.define('Jona', {
 
 
 /*
- * 四角の定義
+ * 敵の定義
  */
 phina.define('Rec', {
-    superClass: 'RectangleShape',
+    superClass: 'Sprite',
 
     //初期化
     init: function(options) {
-        this.superInit(); //初期化のおまじない
+        this.superInit('scrapSuzume');
 
-        this.fill = 'red'; // 四角の塗りつぶし色
-        this.stroke = 'red'; // 四角のふちの色
-        this.width = RECTANGLE_DIAMETER; //四角の縦幅
-        this.height = RECTANGLE_DIAMETER; //四角の横幅
+        this.height = SUZUME_DIAMETER; //四角の縦幅
+        this.width = SUZUME_DIAMETER * 1.3; //四角の縦幅
 
         //四角をクリックできるようにする
         this.setInteractive(true); //四角をクリック可能に
@@ -88,7 +103,7 @@ phina.define('Rec', {
     update: function(app) {
         var speed = 3;
 
-        this.x += speed;
+        this.y += speed;
     },
 });
 
@@ -138,6 +153,7 @@ phina.define("MainScene", {
         // グループを生成
         this.recGroup = DisplayElement().addChildTo(this);
 
+        //Jonathanを生成
         this.jona = Jona({}).addChildTo(this);
     },
 
@@ -148,7 +164,7 @@ phina.define("MainScene", {
 
             var tempRec = Rec({}); //tempRecに四角を一旦代入し、初期値を設定する
             tempRec.x = getRandomInt(DISPLAY_WIDTH); //表示位置(x座標)を画面内でランダムに設定する
-            tempRec.y = getRandomInt(DISPLAY_HEIGHT); //表示位置(y座標)を画面内でランダムに設定する
+            tempRec.y = 0;
 
             tempRec.addChildTo(this.recGroup); //グループに追加する
         }
@@ -172,6 +188,7 @@ phina.main(function() {
         width: DISPLAY_WIDTH, //画面の横幅
         height: DISPLAY_HEIGHT, //画面の縦幅
         fps: ONE_SECOND_FPS, //毎秒何回画面を更新するかの設定。
+        assets: ASSETS,
     });
 
     // 実行
