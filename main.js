@@ -13,6 +13,7 @@ const ONE_SECOND_FPS = 30; //ゲーム画面を、一秒間に何回更新する
 
 var SCORE = 0; //スコアはグローバルで管理する(その方が簡単なので…)
 
+//jonathanで使う、グローバル変数
 var before_p_x = 0;
 var before_p_y = 0;
 
@@ -42,11 +43,13 @@ phina.define('Jona', {
         const diffy = p.y - before_p_y;
         if (app.frame >= 2) {
             console.log(p.x, p.y);
-            if (0 <= this.x + diffx <= DISPLAY_WIDTH) {
-                this.x += diffx;
-            }
-            if (0 <= this.y + diffy <= DISPLAY_HEIGHT) {
-                this.y += diffy;
+            if (p.getPointing()) {
+                if (0 <= this.x + diffx <= DISPLAY_WIDTH) {
+                    this.x += diffx;
+                }
+                if (0 <= this.y + diffy <= DISPLAY_HEIGHT) {
+                    this.y += diffy;
+                }
             }
             //var speed = 0;
 
