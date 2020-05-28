@@ -6,8 +6,11 @@ phina.globalize(); // おまじない(phina.jsをグローバルに展開)
 
 
 // 定数
+const JONATHAN_DIAMETER = 150; // ジョナサンの大きさ
+const JONATHAN_BURRET_DIAMETER = 5; //ジョナサンの弾の大きさ
+
 const SUZUME_DIAMETER = 120; // スクラップ雀の大きさ
-const JONATHAN_DIAMETER = 150; // 正方形の一辺の長さ
+
 const DISPLAY_WIDTH = 640; // ゲーム画面の横幅
 const DISPLAY_HEIGHT = 960; // ゲーム画面の縦幅
 const ONE_SECOND_FPS = 30; //ゲーム画面を、一秒間に何回更新するか
@@ -19,6 +22,10 @@ var before_p_x = 0;
 var before_p_y = 0;
 var touchFlug = false;
 
+//jonathanの弾で使うグローバル変数
+var JONA_BURRET_PER_SECOND = 3;
+
+
 //画像
 var ASSETS = {
     image: {
@@ -26,6 +33,7 @@ var ASSETS = {
         'jonathan': './janathan.png',
     },
 };
+
 
 /*
  * 自分の機体(ジョナサン)の定義
@@ -45,7 +53,6 @@ phina.define('Jona', {
         this.height = JONATHAN_DIAMETER; //四角の横幅
     },
 
-    //毎フレームごとに、どうふるまうか
     //ジョナサンは、タッチしている指の相対位置で動く。画面外には出ない。
     update: function(app) {
         const p = app.pointer;
@@ -78,25 +85,49 @@ phina.define('Jona', {
 });
 
 
+
+/*
+ * ジョナサンの弾の定義
+ */
+phina.define('JonaBurret', {
+    superClass: 'CircleShape',
+
+    //初期化
+    init: function(options) {
+        this.superInit();
+
+        this.radius = JONATHAN_BURRET_DIAMETER;
+        this.damage = 1;
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        var speed = 30;
+
+        this.y -= speed;
+
+        if (this.y <= 0 - 100) { //画面外に出たら、自分を削除
+            this.remove();
+        }
+    },
+});
+
+
+
 /*
  * 敵の定義
  */
-phina.define('Rec', {
+phina.define('Suzume', {
     superClass: 'Sprite',
 
     //初期化
     init: function(options) {
         this.superInit('scrapSuzume');
 
-        this.height = SUZUME_DIAMETER; //四角の縦幅
-        this.width = SUZUME_DIAMETER * 1.3; //四角の縦幅
+        this.height = SUZUME_DIAMETER;
+        this.width = SUZUME_DIAMETER * 1.3;
 
-        //四角をクリックできるようにする
-        this.setInteractive(true); //四角をクリック可能に
-        this.onpointstart = () => { //クリックが始まった瞬間の処理
-            SCORE += 1; //スコアを1追加
-            this.remove(); //自身を削除
-        };
+        this.hitpoint = 30;
     },
 
     //毎フレームごとに、どうふるまうか
@@ -104,7 +135,17 @@ phina.define('Rec', {
         var speed = 3;
 
         this.y += speed;
+
+        if (this.y >= DISPLAY_HEIGHT + 100) { //画面外に出たら、自分を削除
+            this.remove();
+        }
     },
+
+    removeMyself() {
+        this.remove();
+        SCORE += 1;
+    },
+
 });
 
 
@@ -135,6 +176,7 @@ phina.define('scoreLabel', {
 
 
 
+
 /*
  * ゲームのメインシーンの定義
  */
@@ -150,8 +192,12 @@ phina.define("MainScene", {
         //score表示用Labelを、シーンに追加
         scoreLabel({}).addChildTo(this);
 
-        // グループを生成
-        this.recGroup = DisplayElement().addChildTo(this);
+        // スズメグループを生成
+        this.suzumeGroup = DisplayElement().addChildTo(this);
+
+
+        // jonathanの弾のグループを生成
+        this.jonaBurretGroup = DisplayElement().addChildTo(this);
 
         //Jonathanを生成
         this.jona = Jona({}).addChildTo(this);
@@ -160,14 +206,68 @@ phina.define("MainScene", {
 
     //毎フレームごとに、どう振る舞うか
     update: function(app) {
-        if (app.frame % ONE_SECOND_FPS == 0) { //1秒に一回、四角を追加する
 
-            var tempRec = Rec({}); //tempRecに四角を一旦代入し、初期値を設定する
-            tempRec.x = getRandomInt(DISPLAY_WIDTH); //表示位置(x座標)を画面内でランダムに設定する
-            tempRec.y = 0;
 
-            tempRec.addChildTo(this.recGroup); //グループに追加する
+        //jonathanの弾を追加する部分
+        if (app.frame % JONA_BURRET_PER_SECOND == 0) {
+
+            var tempJonaBurret1 = JonaBurret({});
+            tempJonaBurret1.x = this.jona.x;
+            tempJonaBurret1.y = this.jona.y;
+
+            var tempJonaBurret2 = JonaBurret({});
+            tempJonaBurret2.x = this.jona.x + JONATHAN_DIAMETER / 2;
+            tempJonaBurret2.y = this.jona.y;
+
+            var tempJonaBurret3 = JonaBurret({});
+            tempJonaBurret3.x = this.jona.x - JONATHAN_DIAMETER / 2;
+            tempJonaBurret3.y = this.jona.y;
+
+
+            tempJonaBurret1.addChildTo(this.jonaBurretGroup); //グループに追加する
+            tempJonaBurret2.addChildTo(this.jonaBurretGroup); //グループに追加する
+            tempJonaBurret3.addChildTo(this.jonaBurretGroup); //グループに追加する
         }
+
+
+        if (app.frame % ONE_SECOND_FPS == 0) {
+
+            var tempSuzume = Suzume({}); //tempRecに四角を一旦代入し、初期値を設定する
+            tempSuzume.x = getRandomInt(DISPLAY_WIDTH); //表示位置(x座標)を画面内でランダムに設定する
+            tempSuzume.y = 0;
+
+            tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
+        }
+
+
+        //当たり判定を書く部分
+        //console.log(this.suzumeGroup.children[0]);
+        //test = this.suzumeGroup.children[0];
+        //if (test) { console.log(test.position.x) }
+        for (let suzume of this.suzumeGroup.children) {
+            for (let jonaBurret of this.jonaBurretGroup.children) {
+                //console.log("aaa");
+                //console.log(suzume);
+                const c1 = Circle(suzume.x, suzume.y, suzume.radius);
+                const c2 = Circle(jonaBurret.x, jonaBurret.y, jonaBurret.radius);
+                //console.log(c1, c2);
+                if (Collision.testCircleCircle(c1, c2)) {
+                    suzume.hitpoint -= 1;
+                    if (suzume.hitpoint <= 0) {
+                        suzume.removeMyself();
+                    }
+
+                }
+            }
+        }
+        /*
+        if (Collision.testCircleCircle(c, circle)) {
+            circle.fill = 'red';
+        } else {
+            circle.fill = 'blue';
+        }
+        */
+
     },
 
     onkeydown: function(e) { //スペースキーが押されると、強制終了
