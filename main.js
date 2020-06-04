@@ -24,6 +24,8 @@ var touchFlug = false;
 
 //jonathanの弾で使うグローバル変数
 var JONA_BURRET_PER_SECOND = 3;
+var ENEMY_BURRET_PER_SECOND = 10;
+
 
 
 //画像
@@ -31,6 +33,8 @@ var ASSETS = {
     image: {
         'scrapSuzume': './scrapSuzume.png',
         'jonathan': './janathan.png',
+        'background': './background.png',
+        'boom': './boom.png',
     },
 };
 
@@ -97,6 +101,9 @@ phina.define('JonaBurret', {
         this.superInit();
 
         this.radius = JONATHAN_BURRET_DIAMETER;
+        this.stroke = 'blue';
+        this.fill = 'skyblue';
+
         this.damage = 1;
     },
 
@@ -128,6 +135,9 @@ phina.define('Suzume', {
         this.width = SUZUME_DIAMETER * 1.3;
 
         this.hitpoint = 30;
+
+        this.yetRemoveMyselfFlug = true;
+        this.endpoint = -1;
     },
 
     //毎フレームごとに、どうふるまうか
@@ -142,10 +152,54 @@ phina.define('Suzume', {
     },
 
     removeMyself() {
-        this.remove();
-        SCORE += 1;
+        if (this.yetRemoveMyselfFlug) {
+            this.setImage('boom', SUZUME_DIAMETER * 1.3, SUZUME_DIAMETER);
+            this.endpoint = this.y + 60;
+            //console.log(this.y, endpoint);
+            this.yetRemoveMyselfFlug = false;
+        }
+        if (this.y >= this.endpoint && this.endpoint != -1) {
+            this.remove();
+            SCORE += 1;
+        }
+        console.log(this.endpoint, this.y);
+        //if (TIME >= this.endtime) {
+
+        //var startMsec = new Date();
+        // 指定ミリ秒間だけループさせる（CPUは常にビジー状態）
+        //while (new Date() - startMsec < 500);
+        //}
     },
 
+});
+
+/*
+ * 敵の弾の定義
+ */
+phina.define('EnemyBurret', {
+    superClass: 'CircleShape',
+
+    //初期化
+    init: function(options) {
+        this.superInit();
+
+        this.radius = JONATHAN_BURRET_DIAMETER;
+        this.stroke = 'red';
+        this.fill = 'pink';
+
+        this.damage = 1;
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        var speed = 30;
+
+        this.y += speed;
+
+        if (this.y <= 0 - 100) { //画面外に出たら、自分を削除
+            this.remove();
+        }
+    },
 });
 
 
@@ -175,6 +229,38 @@ phina.define('scoreLabel', {
 });
 
 
+/*
+ * 背景表示用Spriteの定義
+ */
+phina.define('Background', {
+    superClass: 'Sprite',
+
+    //初期化
+    init: function(options) {
+        this.superInit('background'); //初期化のおまじない
+
+        let aspect = DISPLAY_WIDTH / this.width;
+        this.width = DISPLAY_WIDTH; //四角の縦幅
+        this.height = this.height * aspect;
+        this.x = DISPLAY_WIDTH / 2;
+        this.y = this.height / 2;
+
+        this.endy = DISPLAY_HEIGHT + DISPLAY_HEIGHT / 2;
+    },
+
+    //背景が動く設定
+    //完全に画面外に出たら、自身を消す
+    update: function(app) {
+        var speed = 5;
+        this.y -= speed;
+        //console.log(this.x, this.y, this.endy);
+        if (this.y <= -this.height / 2) { //画面外に出たら、自分を削除
+            this.remove();
+        }
+    },
+});
+
+
 
 
 /*
@@ -192,6 +278,12 @@ phina.define("MainScene", {
         //score表示用Labelを、シーンに追加
         scoreLabel({}).addChildTo(this);
 
+        //背景
+        this.backgroundGroup = DisplayElement().addChildTo(this);
+        Background({}).addChildTo(this.backgroundGroup); //グループに追加する
+
+        // 敵の弾のグループを生成
+        this.enemyBurretGroup = DisplayElement().addChildTo(this);
         // スズメグループを生成
         this.suzumeGroup = DisplayElement().addChildTo(this);
 
@@ -206,6 +298,7 @@ phina.define("MainScene", {
 
     //毎フレームごとに、どう振る舞うか
     update: function(app) {
+        TIME = app.frame;
 
 
         //jonathanの弾を追加する部分
@@ -229,11 +322,22 @@ phina.define("MainScene", {
             tempJonaBurret3.addChildTo(this.jonaBurretGroup); //グループに追加する
         }
 
+        //敵の弾を追加する部分
+        if (app.frame % ENEMY_BURRET_PER_SECOND == 0) {
+            for (let suzume of this.suzumeGroup.children) {
+                var tempEnemyBurret1 = EnemyBurret({});
+                tempEnemyBurret1.x = suzume.x;
+                tempEnemyBurret1.y = suzume.y;
+                tempEnemyBurret1.addChildTo(this.enemyBurretGroup); //グループに追加する
+            }
+        }
 
+
+        //雀を追加する部分
         if (app.frame % ONE_SECOND_FPS == 0) {
 
-            var tempSuzume = Suzume({}); //tempRecに四角を一旦代入し、初期値を設定する
-            tempSuzume.x = getRandomInt(DISPLAY_WIDTH); //表示位置(x座標)を画面内でランダムに設定する
+            var tempSuzume = Suzume({});
+            tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
             tempSuzume.y = 0;
 
             tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
@@ -241,16 +345,10 @@ phina.define("MainScene", {
 
 
         //当たり判定を書く部分
-        //console.log(this.suzumeGroup.children[0]);
-        //test = this.suzumeGroup.children[0];
-        //if (test) { console.log(test.position.x) }
         for (let suzume of this.suzumeGroup.children) {
             for (let jonaBurret of this.jonaBurretGroup.children) {
-                //console.log("aaa");
-                //console.log(suzume);
                 const c1 = Circle(suzume.x, suzume.y, suzume.radius);
                 const c2 = Circle(jonaBurret.x, jonaBurret.y, jonaBurret.radius);
-                //console.log(c1, c2);
                 if (Collision.testCircleCircle(c1, c2)) {
                     suzume.hitpoint -= 1;
                     if (suzume.hitpoint <= 0) {
@@ -260,13 +358,24 @@ phina.define("MainScene", {
                 }
             }
         }
-        /*
-        if (Collision.testCircleCircle(c, circle)) {
-            circle.fill = 'red';
-        } else {
-            circle.fill = 'blue';
+
+        //背景二枚を切り替えて、無限ループ
+        //console.log(this.backgroundGroup.children[0]);
+        //console.log(this.backgroundGroup.children[0].y, DISPLAY_HEIGHT - this.backgroundGroup.children[0].height / 2);
+        if (this.backgroundGroup.children[0].y <= DISPLAY_HEIGHT - this.backgroundGroup.children[0].height / 2 && this.backgroundGroup.children.length <= 1) {
+            //console.log('endy');
+            var tempBackground = Background({});
+            tempBackground.y = DISPLAY_HEIGHT + tempBackground.height / 2 - 30;
+            tempBackground.addChildTo(this.backgroundGroup); //グループに追加する
         }
-        */
+        //console.log(this.backgroundGroup.children.length);
+        //console.log(this.backgroundGroup.children);
+
+        //for (let back of this.backgroundGroup.children) {
+        //    console.log(back.y);
+        //}
+        //console.log("=======");
+
 
     },
 
