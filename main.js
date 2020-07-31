@@ -17,6 +17,9 @@ const ONE_SECOND_FPS = 30; //ゲーム画面を、一秒間に何回更新する
 
 var SCORE = 0; //スコアはグローバルで管理する(その方が簡単なので…)
 
+
+var SPEED = 5;
+
 //jonathanで使う、グローバル変数
 var before_p_x = 0;
 var before_p_y = 0;
@@ -35,6 +38,8 @@ var ASSETS = {
         'jonathan': './janathan.png',
         'background': './background.png',
         'boom': './boom.png',
+        'triangleimg': './triangle.png',
+        'road_background': './road_background.png',
     },
 };
 
@@ -47,7 +52,7 @@ phina.define('Jona', {
 
     //初期化
     init: function(options) {
-        this.superInit('jonathan'); //初期化のおまじない
+        this.superInit('triangleimg'); //初期化のおまじない
 
         this.fill = 'blue'; // 四角の塗りつぶし色
         this.stroke = 'yello'; // 四角のふちの色
@@ -142,7 +147,7 @@ phina.define('Suzume', {
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        var speed = 3;
+        var speed = SPEED;
 
         this.y += speed;
 
@@ -162,7 +167,7 @@ phina.define('Suzume', {
             this.remove();
             SCORE += 1;
         }
-        console.log(this.endpoint, this.y);
+        //console.log(this.endpoint, this.y);
         //if (TIME >= this.endtime) {
 
         //var startMsec = new Date();
@@ -237,13 +242,13 @@ phina.define('Background', {
 
     //初期化
     init: function(options) {
-        this.superInit('background'); //初期化のおまじない
+        this.superInit('road_background'); //初期化のおまじない
 
         let aspect = DISPLAY_WIDTH / this.width;
-        this.width = DISPLAY_WIDTH; //四角の縦幅
+        this.width = DISPLAY_WIDTH;
         this.height = this.height * aspect;
         this.x = DISPLAY_WIDTH / 2;
-        this.y = this.height / 2;
+        this.y = DISPLAY_HEIGHT;
 
         this.endy = DISPLAY_HEIGHT + DISPLAY_HEIGHT / 2;
     },
@@ -251,10 +256,13 @@ phina.define('Background', {
     //背景が動く設定
     //完全に画面外に出たら、自身を消す
     update: function(app) {
-        var speed = 5;
-        this.y -= speed;
-        //console.log(this.x, this.y, this.endy);
-        if (this.y <= -this.height / 2) { //画面外に出たら、自分を削除
+        //var speed = 5;
+        this.y += SPEED;
+        SPEED += 1;
+        if (SPEED >= 80) {
+            SPEED = 80;
+        }
+        if (this.y >= DISPLAY_HEIGHT + this.height / 2) { //画面外に出たら、自分を削除
             this.remove();
         }
     },
@@ -360,21 +368,12 @@ phina.define("MainScene", {
         }
 
         //背景二枚を切り替えて、無限ループ
-        //console.log(this.backgroundGroup.children[0]);
-        //console.log(this.backgroundGroup.children[0].y, DISPLAY_HEIGHT - this.backgroundGroup.children[0].height / 2);
-        if (this.backgroundGroup.children[0].y <= DISPLAY_HEIGHT - this.backgroundGroup.children[0].height / 2 && this.backgroundGroup.children.length <= 1) {
-            //console.log('endy');
+        console.log(this.backgroundGroup.children.length);
+        if (this.backgroundGroup.children[0].y - this.backgroundGroup.children[0].height / 2 >= 0 && this.backgroundGroup.children.length <= 1) {
             var tempBackground = Background({});
-            tempBackground.y = DISPLAY_HEIGHT + tempBackground.height / 2 - 30;
+            tempBackground.y = -tempBackground.height / 2 + 60;
             tempBackground.addChildTo(this.backgroundGroup); //グループに追加する
         }
-        //console.log(this.backgroundGroup.children.length);
-        //console.log(this.backgroundGroup.children);
-
-        //for (let back of this.backgroundGroup.children) {
-        //    console.log(back.y);
-        //}
-        //console.log("=======");
 
 
     },
