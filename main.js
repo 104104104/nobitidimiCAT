@@ -19,6 +19,7 @@ var SCORE = 0; //スコアはグローバルで管理する(その方が簡単�
 
 
 var SPEED = 5;
+var MAXSPEED = 30;
 
 //jonathanで使う、グローバル変数
 var before_p_x = 0;
@@ -138,6 +139,7 @@ phina.define('Suzume', {
 
         this.height = SUZUME_DIAMETER;
         this.width = SUZUME_DIAMETER * 1.3;
+        this.scaleY *= -1;
 
         this.hitpoint = 30;
 
@@ -147,7 +149,11 @@ phina.define('Suzume', {
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        var speed = SPEED;
+        var speed = SPEED / 5;
+        if (speed <= 0) {
+            speed = SPEED;
+
+        }
 
         this.y += speed;
 
@@ -157,7 +163,9 @@ phina.define('Suzume', {
     },
 
     removeMyself() {
+        MAXSPEED == 2;
         this.remove();
+        //爆発描画なしで
         /*
         if (this.yetRemoveMyselfFlug) {
             this.setImage('boom', SUZUME_DIAMETER * 1.3, SUZUME_DIAMETER);
@@ -207,6 +215,44 @@ phina.define('EnemyBurret', {
             this.remove();
         }
     },
+});
+
+
+/*
+ * 雑魚敵の定義
+ */
+phina.define('Zako', {
+    superClass: 'RectangleShape',
+
+    //初期化
+    init: function(options) {
+        this.superInit();
+
+        this.height = SUZUME_DIAMETER / 5;
+        this.width = SUZUME_DIAMETER / 5;
+
+        this.hitpoint = 10;
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        var speed = SPEED / 10;
+        if (speed <= 0) {
+            speed = SPEED;
+
+        }
+        this.y += speed;
+
+        if (this.y >= DISPLAY_HEIGHT + 100) { //画面外に出たら、自分を削除
+            this.remove();
+        }
+    },
+
+    removeMyself() {
+        MAXSPEED += 1;
+        this.remove();
+    },
+
 });
 
 
@@ -261,8 +307,8 @@ phina.define('Background', {
         //var speed = 5;
         this.y += SPEED;
         SPEED += 1;
-        if (SPEED >= 60) {
-            SPEED = 60;
+        if (SPEED >= MAXSPEED) {
+            SPEED = MAXSPEED;
         }
         if (this.y >= DISPLAY_HEIGHT + this.height / 2) { //画面外に出たら、自分を削除
             this.remove();
@@ -296,6 +342,9 @@ phina.define("MainScene", {
         this.enemyBurretGroup = DisplayElement().addChildTo(this);
         // スズメグループを生成
         this.suzumeGroup = DisplayElement().addChildTo(this);
+
+        // 雑魚グループを生成
+        this.zakoGroup = DisplayElement().addChildTo(this);
 
 
         // jonathanの弾のグループを生成
@@ -333,6 +382,7 @@ phina.define("MainScene", {
         }
 
         //敵の弾を追加する部分
+        /*
         if (app.frame % ENEMY_BURRET_PER_SECOND == 0) {
             for (let suzume of this.suzumeGroup.children) {
                 var tempEnemyBurret1 = EnemyBurret({});
@@ -341,20 +391,50 @@ phina.define("MainScene", {
                 tempEnemyBurret1.addChildTo(this.enemyBurretGroup); //グループに追加する
             }
         }
+        */
 
 
-        //雀を追加する部分
+        //敵を追加する部分
         if (app.frame % ONE_SECOND_FPS == 0) {
 
-            var tempSuzume = Suzume({});
+            if (app.frame >= 600) { //20秒後から雀追加開始
+                var tempSuzume = Suzume({});
+                tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
+                tempSuzume.y = 0;
+
+                tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
+
+                var tempSuzume = Suzume({});
+                tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
+                tempSuzume.y = 0;
+
+                tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
+            }
+
+
+            var tempSuzume = Zako({});
             tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
             tempSuzume.y = 0;
 
-            tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
+            tempSuzume.addChildTo(this.zakoGroup); //グループに追加する
+
+            var tempSuzume = Zako({});
+            tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
+            tempSuzume.y = 0;
+
+            tempSuzume.addChildTo(this.zakoGroup); //グループに追加する
+
+            var tempSuzume = Zako({});
+            tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
+            tempSuzume.y = 0;
+
+            tempSuzume.addChildTo(this.zakoGroup); //グループに追加する
         }
 
 
         //当たり判定を書く部分
+
+        //ジョナさんの弾と敵のあたり判定
         /*
         for (let suzume of this.suzumeGroup.children) {
             for (let jonaBurret of this.jonaBurretGroup.children) {
@@ -368,12 +448,30 @@ phina.define("MainScene", {
 
                 }
             }
-        }*/
+        }
+        */
+
+        //ジョナサンと敵の体当たり判定
         for (let suzume of this.suzumeGroup.children) {
             const c1 = Circle(suzume.x, suzume.y, suzume.radius);
             const c2 = Circle(this.jona.x, this.jona.y, this.jona.radius);
             if (Collision.testCircleCircle(c1, c2)) {
-                SPEED = -SPEED * (1 / 5);
+                if (SPEED <= 60) { //スピードが一定以上の時、跳ね返らない
+                    SPEED = -SPEED * (1 / 3);
+                }
+                //SPEED = -10;
+                suzume.removeMyself();
+            }
+        }
+
+        for (let suzume of this.zakoGroup.children) {
+            const c1 = Circle(suzume.x, suzume.y, suzume.radius);
+            const c2 = Circle(this.jona.x, this.jona.y, this.jona.radius);
+            if (Collision.testCircleCircle(c1, c2)) {
+                //常に跳ね返らない
+                //if (SPEED <= 60) {
+                //    SPEED = -SPEED * (1 / 3);
+                //}
                 //SPEED = -10;
                 suzume.removeMyself();
             }
