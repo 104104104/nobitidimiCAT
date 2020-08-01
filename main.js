@@ -149,7 +149,7 @@ phina.define('Suzume', {
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        var speed = SPEED / 5;
+        var speed = SPEED / 2;
         if (speed <= 0) {
             speed = SPEED;
 
@@ -435,11 +435,13 @@ phina.define("MainScene", {
 
                 tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
 
+                /*
                 var tempSuzume = Suzume({});
                 tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
                 tempSuzume.y = 0;
 
                 tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
+                */
             }
 
 
@@ -487,9 +489,9 @@ phina.define("MainScene", {
             const c1 = Circle(suzume.x, suzume.y, suzume.radius);
             const c2 = Circle(this.jona.x, this.jona.y, this.jona.radius);
             if (Collision.testCircleCircle(c1, c2)) {
-                if (SPEED <= 60) { //スピードが一定以上の時、跳ね返らない
-                    SPEED = -SPEED * (1);
-                }
+                //if (SPEED <= 60) { //スピードが一定以上の時、跳ね返らない
+                SPEED = -SPEED * (1);
+                //}
                 //SPEED = -10;
                 suzume.removeMyself();
             }
