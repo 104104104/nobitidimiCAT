@@ -96,36 +96,6 @@ phina.define('Jona', {
 
 
 
-/*
- * ジョナサンの弾の定義
- */
-phina.define('JonaBurret', {
-    superClass: 'CircleShape',
-
-    //初期化
-    init: function(options) {
-        this.superInit();
-
-        this.radius = JONATHAN_BURRET_DIAMETER;
-        this.stroke = 'blue';
-        this.fill = 'skyblue';
-
-        this.damage = 1;
-    },
-
-    //毎フレームごとに、どうふるまうか
-    update: function(app) {
-        var speed = 30;
-
-        this.y -= speed;
-
-        if (this.y <= 0 - 100) { //画面外に出たら、自分を削除
-            this.remove();
-        }
-    },
-});
-
-
 
 /*
  * 敵の定義
@@ -152,9 +122,7 @@ phina.define('Suzume', {
         var speed = SPEED / 2;
         if (speed <= 0) {
             speed = SPEED;
-
         }
-
         this.y += speed;
 
         if (this.y >= DISPLAY_HEIGHT + 100) { //画面外に出たら、自分を削除
@@ -163,59 +131,12 @@ phina.define('Suzume', {
     },
 
     removeMyself() {
-        MAXSPEED == 2;
+        MAXSPEED += 2;
         this.remove();
-        //爆発描画なしで
-        /*
-        if (this.yetRemoveMyselfFlug) {
-            this.setImage('boom', SUZUME_DIAMETER * 1.3, SUZUME_DIAMETER);
-            this.endpoint = this.y + 60;
-            //console.log(this.y, endpoint);
-            this.yetRemoveMyselfFlug = false;
-        }
-        if (this.y >= this.endpoint && this.endpoint != -1) {
-            this.remove();
-            SCORE += 1;
-        }*/
-        //console.log(this.endpoint, this.y);
-        //if (TIME >= this.endtime) {
-
-        //var startMsec = new Date();
-        // 指定ミリ秒間だけループさせる（CPUは常にビジー状態）
-        //while (new Date() - startMsec < 500);
-        //}
     },
 
 });
 
-/*
- * 敵の弾の定義
- */
-phina.define('EnemyBurret', {
-    superClass: 'CircleShape',
-
-    //初期化
-    init: function(options) {
-        this.superInit();
-
-        this.radius = JONATHAN_BURRET_DIAMETER;
-        this.stroke = 'red';
-        this.fill = 'pink';
-
-        this.damage = 1;
-    },
-
-    //毎フレームごとに、どうふるまうか
-    update: function(app) {
-        var speed = 30;
-
-        this.y += speed;
-
-        if (this.y <= 0 - 100) { //画面外に出たら、自分を削除
-            this.remove();
-        }
-    },
-});
 
 
 /*
@@ -337,7 +258,7 @@ phina.define('Background', {
         if (SPEED >= MAXSPEED) {
             SPEED = MAXSPEED;
         }
-        if (this.y >= DISPLAY_HEIGHT + this.height / 2) { //画面外に出たら、自分を削除
+        if (this.y >= DISPLAY_HEIGHT * 2 + this.height / 2) { //画面外に出たら、自分を削除
             this.remove();
         }
     },
@@ -357,9 +278,6 @@ phina.define("MainScene", {
         this.superInit(); //初期化のおまじない
 
         this.backgroundColor = '#1ee'; // 背景色
-
-        //score表示用Labelを、シーンに追加
-        //scoreLabel({}).addChildTo(this);
 
         //背景
         this.backgroundGroup = DisplayElement().addChildTo(this);
@@ -389,41 +307,6 @@ phina.define("MainScene", {
     //毎フレームごとに、どう振る舞うか
     update: function(app) {
         TIME = app.frame;
-
-
-        //jonathanの弾を追加する部分
-        if (app.frame % JONA_BURRET_PER_SECOND == 0) {
-
-            var tempJonaBurret1 = JonaBurret({});
-            tempJonaBurret1.x = this.jona.x;
-            tempJonaBurret1.y = this.jona.y;
-
-            var tempJonaBurret2 = JonaBurret({});
-            tempJonaBurret2.x = this.jona.x + JONATHAN_DIAMETER / 2;
-            tempJonaBurret2.y = this.jona.y;
-
-            var tempJonaBurret3 = JonaBurret({});
-            tempJonaBurret3.x = this.jona.x - JONATHAN_DIAMETER / 2;
-            tempJonaBurret3.y = this.jona.y;
-
-
-            tempJonaBurret1.addChildTo(this.jonaBurretGroup); //グループに追加する
-            tempJonaBurret2.addChildTo(this.jonaBurretGroup); //グループに追加する
-            tempJonaBurret3.addChildTo(this.jonaBurretGroup); //グループに追加する
-        }
-
-        //敵の弾を追加する部分
-        /*
-        if (app.frame % ENEMY_BURRET_PER_SECOND == 0) {
-            for (let suzume of this.suzumeGroup.children) {
-                var tempEnemyBurret1 = EnemyBurret({});
-                tempEnemyBurret1.x = suzume.x;
-                tempEnemyBurret1.y = suzume.y;
-                tempEnemyBurret1.addChildTo(this.enemyBurretGroup); //グループに追加する
-            }
-        }
-        */
-
 
         //敵を追加する部分
         if (app.frame % ONE_SECOND_FPS == 0) {
@@ -465,25 +348,6 @@ phina.define("MainScene", {
         }
 
 
-        //当たり判定を書く部分
-
-        //ジョナさんの弾と敵のあたり判定
-        /*
-        for (let suzume of this.suzumeGroup.children) {
-            for (let jonaBurret of this.jonaBurretGroup.children) {
-                const c1 = Circle(suzume.x, suzume.y, suzume.radius);
-                const c2 = Circle(jonaBurret.x, jonaBurret.y, jonaBurret.radius);
-                if (Collision.testCircleCircle(c1, c2)) {
-                    suzume.hitpoint -= 1;
-                    if (suzume.hitpoint <= 0) {
-                        suzume.removeMyself();
-                    }
-
-                }
-            }
-        }
-        */
-
         //ジョナサンと敵の体当たり判定
         for (let suzume of this.suzumeGroup.children) {
             const c1 = Circle(suzume.x, suzume.y, suzume.radius);
@@ -514,8 +378,7 @@ phina.define("MainScene", {
 
 
         //背景二枚を切り替えて、無限ループ
-        //console.log(this.backgroundGroup.children.length);
-        if (this.backgroundGroup.children[0].y - this.backgroundGroup.children[0].height / 2 >= 0 && this.backgroundGroup.children.length <= 1) {
+        if (this.backgroundGroup.children[0].y - this.backgroundGroup.children[0].height / 2 >= 0 && this.backgroundGroup.children.length <= 2) {
             var tempBackground = Background({});
             tempBackground.y = -tempBackground.height / 2 + 60;
             tempBackground.addChildTo(this.backgroundGroup); //グループに追加する
