@@ -157,6 +157,8 @@ phina.define('Suzume', {
     },
 
     removeMyself() {
+        this.remove();
+        /*
         if (this.yetRemoveMyselfFlug) {
             this.setImage('boom', SUZUME_DIAMETER * 1.3, SUZUME_DIAMETER);
             this.endpoint = this.y + 60;
@@ -166,7 +168,7 @@ phina.define('Suzume', {
         if (this.y >= this.endpoint && this.endpoint != -1) {
             this.remove();
             SCORE += 1;
-        }
+        }*/
         //console.log(this.endpoint, this.y);
         //if (TIME >= this.endtime) {
 
@@ -259,8 +261,8 @@ phina.define('Background', {
         //var speed = 5;
         this.y += SPEED;
         SPEED += 1;
-        if (SPEED >= 80) {
-            SPEED = 80;
+        if (SPEED >= 60) {
+            SPEED = 60;
         }
         if (this.y >= DISPLAY_HEIGHT + this.height / 2) { //画面外に出たら、自分を削除
             this.remove();
@@ -353,6 +355,7 @@ phina.define("MainScene", {
 
 
         //当たり判定を書く部分
+        /*
         for (let suzume of this.suzumeGroup.children) {
             for (let jonaBurret of this.jonaBurretGroup.children) {
                 const c1 = Circle(suzume.x, suzume.y, suzume.radius);
@@ -365,10 +368,22 @@ phina.define("MainScene", {
 
                 }
             }
+        }*/
+        for (let suzume of this.suzumeGroup.children) {
+            const c1 = Circle(suzume.x, suzume.y, suzume.radius);
+            const c2 = Circle(this.jona.x, this.jona.y, this.jona.radius);
+            if (Collision.testCircleCircle(c1, c2)) {
+                SPEED = -SPEED * (1 / 5);
+                //SPEED = -10;
+                suzume.removeMyself();
+            }
         }
+        console.log("SPEED", SPEED);
+
+
 
         //背景二枚を切り替えて、無限ループ
-        console.log(this.backgroundGroup.children.length);
+        //console.log(this.backgroundGroup.children.length);
         if (this.backgroundGroup.children[0].y - this.backgroundGroup.children[0].height / 2 >= 0 && this.backgroundGroup.children.length <= 1) {
             var tempBackground = Background({});
             tempBackground.y = -tempBackground.height / 2 + 60;
