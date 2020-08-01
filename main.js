@@ -258,9 +258,9 @@ phina.define('Zako', {
 
 
 /*
- * スコア表示用Labalの定義
+ * 距離表示用Labalの定義
  */
-phina.define('scoreLabel', {
+phina.define('lengthLabel', {
     superClass: 'Label',
 
     //初期化
@@ -269,15 +269,42 @@ phina.define('scoreLabel', {
 
         this.text = "0"; //最初のtextは 0
         this.fontsize = 64; //フォントの大きさ
-        this.x = DISPLAY_WIDTH / 2; //表示位置(x座標)
-        this.y = DISPLAY_HEIGHT - (DISPLAY_HEIGHT / 9); //表示位置(y座標)
+        this.x = DISPLAY_WIDTH / 3; //表示位置(x座標)
+        this.y = (DISPLAY_HEIGHT / 9); //表示位置(y座標)
+        this.fill = '#111'; //文字の色
+        this.length = 0;
+    },
+
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        this.length += SPEED;
+        this.text = Math.floor(this.length); //textに現在のSCOREを代入
+    }
+});
+
+
+/*
+ * 制限時間表示用Labalの定義
+ */
+phina.define('timeLabel', {
+    superClass: 'Label',
+
+    //初期化
+    init: function(options) {
+        this.superInit(); //初期化のおまじない
+
+        this.text = "0"; //最初のtextは 0
+        this.fontsize = 64; //フォントの大きさ
+        this.x = DISPLAY_WIDTH / 3 * 2; //表示位置(x座標)
+        this.y = (DISPLAY_HEIGHT / 9); //表示位置(y座標)
         this.fill = '#111'; //文字の色
     },
 
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        this.text = SCORE; //textに現在のSCOREを代入
+        this.text = Math.floor(TIME / ONE_SECOND_FPS);
     }
 });
 
@@ -306,7 +333,7 @@ phina.define('Background', {
     update: function(app) {
         //var speed = 5;
         this.y += SPEED;
-        SPEED += 1;
+        SPEED += 2;
         if (SPEED >= MAXSPEED) {
             SPEED = MAXSPEED;
         }
@@ -332,7 +359,7 @@ phina.define("MainScene", {
         this.backgroundColor = '#1ee'; // 背景色
 
         //score表示用Labelを、シーンに追加
-        scoreLabel({}).addChildTo(this);
+        //scoreLabel({}).addChildTo(this);
 
         //背景
         this.backgroundGroup = DisplayElement().addChildTo(this);
@@ -352,6 +379,10 @@ phina.define("MainScene", {
 
         //Jonathanを生成
         this.jona = Jona({}).addChildTo(this);
+
+        //時間を表示
+        this.timeLabel = timeLabel({}).addChildTo(this);
+        this.lengthLabel = lengthLabel({}).addChildTo(this);
     },
 
 
@@ -397,7 +428,7 @@ phina.define("MainScene", {
         //敵を追加する部分
         if (app.frame % ONE_SECOND_FPS == 0) {
 
-            if (app.frame >= 600) { //20秒後から雀追加開始
+            if (app.frame >= 60) { //5秒後から雀追加開始
                 var tempSuzume = Suzume({});
                 tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
                 tempSuzume.y = 0;
@@ -457,7 +488,7 @@ phina.define("MainScene", {
             const c2 = Circle(this.jona.x, this.jona.y, this.jona.radius);
             if (Collision.testCircleCircle(c1, c2)) {
                 if (SPEED <= 60) { //スピードが一定以上の時、跳ね返らない
-                    SPEED = -SPEED * (1 / 3);
+                    SPEED = -SPEED * (1);
                 }
                 //SPEED = -10;
                 suzume.removeMyself();
