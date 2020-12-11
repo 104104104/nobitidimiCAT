@@ -1,269 +1,118 @@
 /*
- * シンプルに四角が動く、ゲーム(?)
+ * ねこのび
  */
 
 phina.globalize(); // おまじない(phina.jsをグローバルに展開)
 
 
 // 定数
-const JONATHAN_DIAMETER = 150; // ジョナサンの大きさ
-const JONATHAN_BURRET_DIAMETER = 5; //ジョナサンの弾の大きさ
-
-const SUZUME_DIAMETER = 120; // スクラップ雀の大きさ
-
+const RECTANGLE_DIAMETER = 60; // 正方形の一辺の長さ
 const DISPLAY_WIDTH = 640; // ゲーム画面の横幅
 const DISPLAY_HEIGHT = 960; // ゲーム画面の縦幅
 const ONE_SECOND_FPS = 30; //ゲーム画面を、一秒間に何回更新するか
 
-var SCORE = 0; //スコアはグローバルで管理する(その方が簡単なので…)
+const MAX_NEKO_HEIGHT = DISPLAY_HEIGHT / 10;
+const GROUND_HEIGHT = DISPLAY_HEIGHT - DISPLAY_HEIGHT / 5;
 
-
-var SPEED = 5;
-var MAXSPEED = 30;
-
-//jonathanで使う、グローバル変数
-var before_p_x = 0;
-var before_p_y = 0;
-var touchFlug = false;
-
-//jonathanの弾で使うグローバル変数
-var JONA_BURRET_PER_SECOND = 3;
-var ENEMY_BURRET_PER_SECOND = 10;
-
-
-
-//画像
-var ASSETS = {
-    image: {
-        'scrapSuzume': './scrapSuzume.png',
-        'jonathan': './janathan.png',
-        'background': './background.png',
-        'boom': './boom.png',
-        'triangleimg': './triangle.png',
-        'road_background': './road_background.png',
-    },
-};
+var SPACE_DOWN_FRAG = false;
 
 
 /*
- * 自分の機体(ジョナサン)の定義
+ * ねこの定義
  */
-phina.define('Jona', {
-    superClass: 'Sprite',
-
-    //初期化
-    init: function(options) {
-        this.superInit('triangleimg'); //初期化のおまじない
-
-        this.fill = 'blue'; // 四角の塗りつぶし色
-        this.stroke = 'yello'; // 四角のふちの色
-        this.x = DISPLAY_WIDTH / 2;
-        this.y = DISPLAY_HEIGHT * 2 / 3;
-        this.width = JONATHAN_DIAMETER; //四角の縦幅
-        this.height = JONATHAN_DIAMETER; //四角の横幅
-    },
-
-    //ジョナサンは、タッチしている指の相対位置で動く。画面外には出ない。
-    update: function(app) {
-        const p = app.pointer;
-        const diffx = p.x - before_p_x;
-        const diffy = p.y - before_p_y;
-        if (p.getPointing()) {
-            if (touchFlug) {
-                this.x += diffx;
-                if (this.x <= 0) {
-                    this.x = 0;
-                }
-                if (DISPLAY_WIDTH <= this.x) {
-                    this.x = DISPLAY_WIDTH;
-                }
-                this.y += diffy;
-                if (this.y <= 0) {
-                    this.y = 0;
-                }
-                if (DISPLAY_HEIGHT <= this.y) {
-                    this.y = DISPLAY_HEIGHT;
-                }
-            }
-            touchFlug = true;
-        } else {
-            touchFlug = false;
-        }
-        before_p_x = p.x;
-        before_p_y = p.y;
-    },
-});
-
-
-
-
-/*
- * 敵の定義
- */
-phina.define('Suzume', {
-    superClass: 'Sprite',
-
-    //初期化
-    init: function(options) {
-        this.superInit('scrapSuzume');
-
-        this.height = SUZUME_DIAMETER;
-        this.width = SUZUME_DIAMETER * 1.3;
-        this.scaleY *= -1;
-
-        this.hitpoint = 30;
-
-        this.yetRemoveMyselfFlug = true;
-        this.endpoint = -1;
-    },
-
-    //毎フレームごとに、どうふるまうか
-    update: function(app) {
-        var speed = SPEED / 2;
-        if (speed <= 0) {
-            speed = SPEED;
-        }
-        this.y += speed;
-
-        if (this.y >= DISPLAY_HEIGHT + 100) { //画面外に出たら、自分を削除
-            this.remove();
-        }
-    },
-
-    removeMyself() {
-        MAXSPEED += 2;
-        this.remove();
-    },
-
-});
-
-
-
-/*
- * 雑魚敵の定義
- */
-phina.define('Zako', {
+phina.define('Cat', {
     superClass: 'RectangleShape',
 
     //初期化
     init: function(options) {
-        this.superInit();
+        this.superInit(); //初期化のおまじない
 
-        this.height = SUZUME_DIAMETER / 5;
-        this.width = SUZUME_DIAMETER / 5;
+        this.origin.set(0, 1); //左下を原点に
 
-        this.hitpoint = 10;
+        this.fill = 'red'; // 四角の塗りつぶし色
+        this.stroke = 'red'; // 四角のふちの色
+        this.width = RECTANGLE_DIAMETER; //四角の縦幅
+        this.height = RECTANGLE_DIAMETER; //四角の横幅
+        this.x = 100;
+        this.y = GROUND_HEIGHT;
+
+        this.expandSpeed = 0;
+        this.shrinkSpeed = 0;
     },
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        var speed = SPEED / 10;
-        if (speed <= 0) {
-            speed = SPEED;
-
-        }
-        this.y += speed;
-
-        if (this.y >= DISPLAY_HEIGHT + 100) { //画面外に出たら、自分を削除
-            this.remove();
+        if (SPACE_DOWN_FRAG) {
+            if (MAX_NEKO_HEIGHT < this.y - this.height) {
+                this.height += this.expandSpeed;
+            }
+            if (app.frame % Math.floor(ONE_SECOND_FPS / 8) == 0) {
+                this.expandSpeed += 5;
+            }
+        } else {
+            this.expandSpeed = 0;
+            if (this.height > RECTANGLE_DIAMETER) {
+                this.height -= this.shrinkSpeed;
+                this.shrinkSpeed += 100;
+            } else {
+                this.height = RECTANGLE_DIAMETER;
+                this.shrinkSpeed = 0;
+            }
         }
     },
-
-    removeMyself() {
-        MAXSPEED += 1;
-        this.remove();
-    },
-
 });
 
-
-
 /*
- * 距離表示用Labalの定義
+ * 風船
  */
-phina.define('lengthLabel', {
-    superClass: 'Label',
+phina.define('Balloon', {
+    superClass: 'RectangleShape',
 
     //初期化
     init: function(options) {
         this.superInit(); //初期化のおまじない
 
-        this.text = "0"; //最初のtextは 0
-        this.fontsize = 64; //フォントの大きさ
-        this.x = DISPLAY_WIDTH / 3; //表示位置(x座標)
-        this.y = (DISPLAY_HEIGHT / 9); //表示位置(y座標)
-        this.fill = '#111'; //文字の色
-        this.length = 0;
-    },
+        this.origin.set(0, 1); //左下を原点に
 
+        this.fill = 'blue'; // 四角の塗りつぶし色
+        this.stroke = 'blue'; // 四角のふちの色
+        this.x = DISPLAY_WIDTH;
+        this.y = MAX_NEKO_HEIGHT + getRandomInt(GROUND_HEIGHT - MAX_NEKO_HEIGHT);
+        this.width = 20; //四角の縦幅
+        this.height = 20; //四角の横幅
+    },
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        this.length += SPEED;
-        this.text = Math.floor(this.length); //textに現在のSCOREを代入
-    }
+        var speed = -3;
+        this.x += speed;
+    },
 });
 
-
 /*
- * 制限時間表示用Labalの定義
+ * 画面下部の草
  */
-phina.define('timeLabel', {
-    superClass: 'Label',
+phina.define('Grass', {
+    superClass: 'RectangleShape',
 
     //初期化
     init: function(options) {
         this.superInit(); //初期化のおまじない
 
-        this.text = "0"; //最初のtextは 0
-        this.fontsize = 64; //フォントの大きさ
-        this.x = DISPLAY_WIDTH / 3 * 2; //表示位置(x座標)
-        this.y = (DISPLAY_HEIGHT / 9); //表示位置(y座標)
-        this.fill = '#111'; //文字の色
-    },
+        this.origin.set(0, 1); //左下を原点に
 
+        this.fill = 'green'; // 四角の塗りつぶし色
+        this.stroke = 'green'; // 四角のふちの色
+        this.width = 10; //四角の縦幅
+        this.height = 20; //四角の横幅
+    },
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        this.text = Math.floor(TIME / ONE_SECOND_FPS);
-    }
-});
-
-
-/*
- * 背景表示用Spriteの定義
- */
-phina.define('Background', {
-    superClass: 'Sprite',
-
-    //初期化
-    init: function(options) {
-        this.superInit('road_background'); //初期化のおまじない
-
-        let aspect = DISPLAY_WIDTH / this.width;
-        this.width = DISPLAY_WIDTH;
-        this.height = this.height * aspect;
-        this.x = DISPLAY_WIDTH / 2;
-        this.y = DISPLAY_HEIGHT;
-
-        this.endy = DISPLAY_HEIGHT + DISPLAY_HEIGHT / 2;
-    },
-
-    //背景が動く設定
-    //完全に画面外に出たら、自身を消す
-    update: function(app) {
-        //var speed = 5;
-        this.y += SPEED;
-        SPEED += 2;
-        if (SPEED >= MAXSPEED) {
-            SPEED = MAXSPEED;
-        }
-        if (this.y >= DISPLAY_HEIGHT * 2 + this.height / 2) { //画面外に出たら、自分を削除
-            this.remove();
-        }
+        var speed = -3;
+        this.x += speed;
     },
 });
-
 
 
 
@@ -279,117 +128,48 @@ phina.define("MainScene", {
 
         this.backgroundColor = '#1ee'; // 背景色
 
-        //背景
-        this.backgroundGroup = DisplayElement().addChildTo(this);
-        Background({}).addChildTo(this.backgroundGroup); //グループに追加する
+        //Catの生成
+        var tempCat = Cat({});
+        tempCat.addChildTo(this);
 
-        // 敵の弾のグループを生成
-        this.enemyBurretGroup = DisplayElement().addChildTo(this);
-        // スズメグループを生成
-        this.suzumeGroup = DisplayElement().addChildTo(this);
-
-        // 雑魚グループを生成
-        this.zakoGroup = DisplayElement().addChildTo(this);
-
-
-        // jonathanの弾のグループを生成
-        this.jonaBurretGroup = DisplayElement().addChildTo(this);
-
-        //Jonathanを生成
-        this.jona = Jona({}).addChildTo(this);
-
-        //時間を表示
-        this.timeLabel = timeLabel({}).addChildTo(this);
-        this.lengthLabel = lengthLabel({}).addChildTo(this);
+        // グループを生成
+        this.balloonGroup = DisplayElement().addChildTo(this);
+        this.grassGroup = DisplayElement().addChildTo(this);
     },
 
 
     //毎フレームごとに、どう振る舞うか
     update: function(app) {
-        TIME = app.frame;
-
-        //敵を追加する部分
         if (app.frame % ONE_SECOND_FPS == 0) {
+            //風船の追加
+            var tampBalloon = Balloon({});
+            tampBalloon.addChildTo(this.balloonGroup); //グループに追加する
 
-            if (app.frame >= 60) { //5秒後から雀追加開始
-                var tempSuzume = Suzume({});
-                tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
-                tempSuzume.y = 0;
-
-                tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
-
-                /*
-                var tempSuzume = Suzume({});
-                tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
-                tempSuzume.y = 0;
-
-                tempSuzume.addChildTo(this.suzumeGroup); //グループに追加する
-                */
-            }
-
-
-            var tempSuzume = Zako({});
-            tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
-            tempSuzume.y = 0;
-
-            tempSuzume.addChildTo(this.zakoGroup); //グループに追加する
-
-            var tempSuzume = Zako({});
-            tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
-            tempSuzume.y = 0;
-
-            tempSuzume.addChildTo(this.zakoGroup); //グループに追加する
-
-            var tempSuzume = Zako({});
-            tempSuzume.x = getRandomInt(DISPLAY_WIDTH);
-            tempSuzume.y = 0;
-
-            tempSuzume.addChildTo(this.zakoGroup); //グループに追加する
+            //草の追加
+            var tempGrass = Grass({});
+            tempGrass.x = DISPLAY_WIDTH;
+            tempGrass.y = GROUND_HEIGHT;
+            tempGrass.addChildTo(this.grassGroup); //グループに追加する
         }
-
-
-        //ジョナサンと敵の体当たり判定
-        for (let suzume of this.suzumeGroup.children) {
-            const c1 = Circle(suzume.x, suzume.y, suzume.radius);
-            const c2 = Circle(this.jona.x, this.jona.y, this.jona.radius);
-            if (Collision.testCircleCircle(c1, c2)) {
-                //if (SPEED <= 60) { //スピードが一定以上の時、跳ね返らない
-                SPEED = -SPEED * (1);
-                //}
-                //SPEED = -10;
-                suzume.removeMyself();
-            }
-        }
-
-        for (let suzume of this.zakoGroup.children) {
-            const c1 = Circle(suzume.x, suzume.y, suzume.radius);
-            const c2 = Circle(this.jona.x, this.jona.y, this.jona.radius);
-            if (Collision.testCircleCircle(c1, c2)) {
-                //常に跳ね返らない
-                //if (SPEED <= 60) {
-                //    SPEED = -SPEED * (1 / 3);
-                //}
-                //SPEED = -10;
-                suzume.removeMyself();
-            }
-        }
-        console.log("SPEED", SPEED);
-
-
-
-        //背景二枚を切り替えて、無限ループ
-        if (this.backgroundGroup.children[0].y - this.backgroundGroup.children[0].height / 2 >= 0 && this.backgroundGroup.children.length <= 2) {
-            var tempBackground = Background({});
-            tempBackground.y = -tempBackground.height / 2 + 60;
-            tempBackground.addChildTo(this.backgroundGroup); //グループに追加する
-        }
-
-
     },
 
-    onkeydown: function(e) { //スペースキーが押されると、強制終了
-        if (e.keyCode === 32) { //32がスペースキー
+    onkeydown: function(e) {
+        //Qが押されると、強制終了
+        if (e.keyCode === 81) { //81はQ
+            console.log('STOP THIS APP!');
             this.app.stop();
+        }
+        //スペースキーが押されると、伸びる
+        if (e.keyCode === 32) { //32はスペース
+            console.log('PRESS SPACE');
+            SPACE_DOWN_FRAG = true;
+        }
+    },
+
+    onkeyup: function(e) { //スペースキーが話されると、縮む
+        if (e.keyCode === 32) { //32はスペース
+            console.log('ESC SPACE');
+            SPACE_DOWN_FRAG = false;
         }
     },
 });
@@ -405,7 +185,6 @@ phina.main(function() {
         width: DISPLAY_WIDTH, //画面の横幅
         height: DISPLAY_HEIGHT, //画面の縦幅
         fps: ONE_SECOND_FPS, //毎秒何回画面を更新するかの設定。
-        assets: ASSETS,
     });
 
     // 実行
