@@ -13,6 +13,7 @@ const ONE_SECOND_FPS = 30; //ゲーム画面を、一秒間に何回更新する
 
 const MAX_NEKO_HEIGHT = DISPLAY_HEIGHT / 10;
 const GROUND_HEIGHT = DISPLAY_HEIGHT - DISPLAY_HEIGHT / 5;
+const MIN_NEKO_HEIGHT = GROUND_HEIGHT - RECTANGLE_DIAMETER;
 
 var SPACE_DOWN_FRAG = false;
 
@@ -89,6 +90,35 @@ phina.define('Balloon', {
     },
 });
 
+
+/*
+ * トゲトゲ
+ */
+phina.define('Togetoge', {
+    superClass: 'RectangleShape',
+
+    //初期化
+    init: function(options) {
+        this.superInit(); //初期化のおまじない
+
+        this.origin.set(0, 1); //左下を原点に
+
+        this.fill = 'black'; // 四角の塗りつぶし色
+        this.stroke = 'black'; // 四角のふちの色
+        this.x = DISPLAY_WIDTH;
+        this.y = MAX_NEKO_HEIGHT + getRandomInt(MIN_NEKO_HEIGHT - MAX_NEKO_HEIGHT);
+        this.width = 20; //四角の縦幅
+        this.height = 20; //四角の横幅
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        var speed = -3;
+        this.x += speed;
+    },
+});
+
+
 /*
  * 画面下部の草
  */
@@ -134,16 +164,33 @@ phina.define("MainScene", {
 
         // グループを生成
         this.balloonGroup = DisplayElement().addChildTo(this);
+        this.togetogeGroup = DisplayElement().addChildTo(this);
         this.grassGroup = DisplayElement().addChildTo(this);
     },
 
 
     //毎フレームごとに、どう振る舞うか
     update: function(app) {
-        if (app.frame % ONE_SECOND_FPS == 0) {
-            //風船の追加
-            var tampBalloon = Balloon({});
-            tampBalloon.addChildTo(this.balloonGroup); //グループに追加する
+        if (app.frame % (ONE_SECOND_FPS) == 0) {
+            var rand = getRandomInt(2);
+            if (rand <= 0) { // 1/2で、風船の追加
+                var tampBalloon = Balloon({});
+                tampBalloon.addChildTo(this.balloonGroup); //グループに追加する
+            } else { // 1/2でトゲトゲの追加
+                var rand2 = getRandomInt(2);
+                if (rand2 <= 0) { // 1/2でトゲトゲだけ追加
+                    var tampTogetoge = Togetoge({});
+                    tampTogetoge.addChildTo(this.balloonGroup); //グループに追加する
+                } else { // 1/2で、トゲトゲと風船を追加
+                    var tempTogetoge = Togetoge({});
+                    tempTogetoge.addChildTo(this.balloonGroup); //グループに追加する
+
+                    var tempBalloon = Balloon({});
+                    var balloonY = getRandomIntMinMax(MIN_NEKO_HEIGHT, tempTogetoge.y);
+                    tempBalloon.y = balloonY;
+                    tempBalloon.addChildTo(this.balloonGroup); //グループに追加する
+                }
+            }
 
             //草の追加
             var tempGrass = Grass({});
@@ -196,4 +243,11 @@ phina.main(function() {
 // 0~maxの範囲で返す
 function getRandomInt(max) {
     return Math.floor(Math.random() * Math.floor(max));
+}
+
+
+function getRandomIntMinMax(min, max) {
+    var temp = max - min;
+    var tempRand = Math.floor(Math.random() * Math.floor(temp));
+    return min + tempRand;
 }
