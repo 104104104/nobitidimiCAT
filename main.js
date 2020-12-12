@@ -17,6 +17,8 @@ const MIN_NEKO_HEIGHT = GROUND_HEIGHT - RECTANGLE_DIAMETER;
 
 var SPACE_DOWN_FRAG = false;
 
+var SCORE = 0;
+
 
 /*
  * ねこの定義
@@ -88,6 +90,11 @@ phina.define('Balloon', {
         var speed = -3;
         this.x += speed;
     },
+
+    removeBalloon: function() {
+        SCORE += 1; //スコアを1追加
+        this.remove(); //自身を削除
+    },
 });
 
 
@@ -145,6 +152,30 @@ phina.define('Grass', {
 });
 
 
+/*
+ * スコア表示用Labalの定義
+ */
+phina.define('ScoreLabel', {
+    superClass: 'Label',
+
+    //初期化
+    init: function(options) {
+        this.superInit(); //初期化のおまじない
+
+        this.text = "0"; //最初のtextは 0
+        this.fontsize = 64; //フォントの大きさ
+        this.x = DISPLAY_WIDTH / 2; //表示位置(x座標)
+        this.y = DISPLAY_HEIGHT / 9; //表示位置(y座標)
+        this.fill = '#111'; //文字の色
+    },
+
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        this.text = SCORE; //textに現在のSCOREを代入
+    }
+});
+
 
 /*
  * ゲームのメインシーンの定義
@@ -158,9 +189,11 @@ phina.define("MainScene", {
 
         this.backgroundColor = '#1ee'; // 背景色
 
+        //score表示用Labelを、シーンに追加
+        ScoreLabel({}).addChildTo(this);
+
         //Catの生成
-        var tempCat = Cat({});
-        tempCat.addChildTo(this);
+        this.cat = Cat({}).addChildTo(this);
 
         // グループを生成
         this.balloonGroup = DisplayElement().addChildTo(this);
@@ -180,10 +213,10 @@ phina.define("MainScene", {
                 var rand2 = getRandomInt(2);
                 if (rand2 <= 0) { // 1/2でトゲトゲだけ追加
                     var tampTogetoge = Togetoge({});
-                    tampTogetoge.addChildTo(this.balloonGroup); //グループに追加する
+                    tampTogetoge.addChildTo(this.togetogeGroup); //グループに追加する
                 } else { // 1/2で、トゲトゲと風船を追加
                     var tempTogetoge = Togetoge({});
-                    tempTogetoge.addChildTo(this.balloonGroup); //グループに追加する
+                    tempTogetoge.addChildTo(this.togetogeGroup); //グループに追加する
 
                     var tempBalloon = Balloon({});
                     var balloonY = getRandomIntMinMax(MIN_NEKO_HEIGHT, tempTogetoge.y);
@@ -197,6 +230,14 @@ phina.define("MainScene", {
             tempGrass.x = DISPLAY_WIDTH;
             tempGrass.y = GROUND_HEIGHT;
             tempGrass.addChildTo(this.grassGroup); //グループに追加する
+        }
+
+        //当たり判定
+        for (let oneBalloon of this.balloonGroup.children) {
+            if (oneBalloon.hitTestElement(this.cat)) {
+                console.log('hit!')
+                oneBalloon.removeBalloon();
+            }
         }
     },
 
