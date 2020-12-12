@@ -178,6 +178,27 @@ phina.define('ScoreLabel', {
 
 
 /*
+ * GAMEOVERの文字表示
+ */
+phina.define('GameoverLabel', {
+    superClass: 'Label',
+
+    //初期化
+    init: function(options) {
+        this.superInit(); //初期化のおまじない
+
+        this.text = "GAME OVER"; //最初のtextは 0
+        this.fontsize = 256; //フォントの大きさ
+        this.x = DISPLAY_WIDTH / 2; //表示位置(x座標)
+        this.y = DISPLAY_HEIGHT / 2; //表示位置(y座標)
+        this.fill = '#111'; //文字の色
+
+        this.hide();
+    },
+});
+
+
+/*
  * ゲームのメインシーンの定義
  */
 phina.define("MainScene", {
@@ -191,6 +212,10 @@ phina.define("MainScene", {
 
         //score表示用Labelを、シーンに追加
         ScoreLabel({}).addChildTo(this);
+
+        //GAMEOVER表示用Labelを、シーンに追加
+        this.gameoverLavel = GameoverLabel({}).addChildTo(this);
+        console.log(this.gameoverLavel);
 
         //Catの生成
         this.cat = Cat({}).addChildTo(this);
@@ -233,12 +258,24 @@ phina.define("MainScene", {
         }
 
         //当たり判定
+
+        //風船と猫の当たり判定
         for (let oneBalloon of this.balloonGroup.children) {
             if (oneBalloon.hitTestElement(this.cat)) {
-                console.log('hit!')
+                //console.log('hit!')
                 oneBalloon.removeBalloon();
             }
         }
+
+        //トゲトゲと猫と当たり判定
+        for (let oneTogetoge of this.togetogeGroup.children) {
+            if (oneTogetoge.hitTestElement(this.cat)) {
+                console.log('GAME OVER!');
+                this.gameoverLavel.show();
+                this.cat.hide();
+            }
+        }
+
     },
 
     onkeydown: function(e) {
@@ -249,14 +286,14 @@ phina.define("MainScene", {
         }
         //スペースキーが押されると、伸びる
         if (e.keyCode === 32) { //32はスペース
-            console.log('PRESS SPACE');
+            //console.log('PRESS SPACE');
             SPACE_DOWN_FRAG = true;
         }
     },
 
     onkeyup: function(e) { //スペースキーが話されると、縮む
         if (e.keyCode === 32) { //32はスペース
-            console.log('ESC SPACE');
+            //console.log('ESC SPACE');
             SPACE_DOWN_FRAG = false;
         }
     },
