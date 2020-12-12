@@ -18,6 +18,7 @@ const MIN_NEKO_HEIGHT = GROUND_HEIGHT - RECTANGLE_DIAMETER;
 var SPACE_DOWN_FRAG = false;
 
 var SCORE = 0;
+var SCORE_MUL = 1;
 
 
 /*
@@ -83,6 +84,8 @@ phina.define('Balloon', {
         this.y = MAX_NEKO_HEIGHT + getRandomInt(GROUND_HEIGHT - MAX_NEKO_HEIGHT);
         this.width = 20; //四角の縦幅
         this.height = 20; //四角の横幅
+
+        this.beforNekoFrug = true;
     },
 
     //毎フレームごとに、どうふるまうか
@@ -92,7 +95,8 @@ phina.define('Balloon', {
     },
 
     removeBalloon: function() {
-        SCORE += 1; //スコアを1追加
+        SCORE += SCORE_MUL; //スコアを追加
+        SCORE_MUL *= 2;
         this.remove(); //自身を削除
     },
 });
@@ -276,6 +280,15 @@ phina.define("MainScene", {
             }
         }
 
+        //風船をとり逃した判定
+        for (let oneBalloon of this.balloonGroup.children) {
+            if (oneBalloon.x < this.cat.x && oneBalloon.beforNekoFrug) {
+                console.log('torinogashi');
+                SCORE_MUL = 1;
+                oneBalloon.beforNekoFrug = false;
+            }
+
+        }
     },
 
     onkeydown: function(e) {
