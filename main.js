@@ -41,6 +41,9 @@ var ASSETS = {
         'grass': './grass.PNG',
         'grassBack': './grassBack.PNG',
 
+        'red': './balloonRed.PNG',
+        'blue': './balloonBlue.PNG',
+        'yellow': './balloonYellow.PNG',
         'togetoge': './togetoge.PNG',
     },
 };
@@ -179,7 +182,7 @@ phina.define('CatFoot', {
 
 
 /*
- * 風船
+ * 風船の当たり判定部分
  */
 phina.define('Balloon', {
     superClass: 'RectangleShape',
@@ -194,22 +197,56 @@ phina.define('Balloon', {
         this.stroke = 'blue'; // 四角のふちの色
         this.x = DISPLAY_WIDTH;
         this.y = MAX_NEKO_HEIGHT + getRandomInt(GROUND_HEIGHT - MAX_NEKO_HEIGHT);
-        this.width = 20; //四角の縦幅
-        this.height = 20; //四角の横幅
+        this.width = 80; //四角の縦幅
+        this.height = 80; //四角の横幅
 
         this.beforNekoFrug = true;
+
+        this.balloonColor = '';
+        var rand = getRandomInt(2);
+        if (rand == 0) {
+            this.balloonColor = 'red';
+        } else if (rand == 1) {
+            this.balloonColor = 'blue';
+        } else {
+            this.balloonColor = 'yellow';
+        }
+
+        this.speed = -3;
     },
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        var speed = -3;
-        this.x += speed;
+        this.x += this.speed;
     },
 
     removeBalloon: function() {
         SCORE += SCORE_MUL; //スコアを追加
         SCORE_MUL *= 2;
         this.remove(); //自身を削除
+    },
+});
+
+/*
+ * 風船の画像部分
+ */
+phina.define('BalloonSprite', {
+    superClass: 'Sprite',
+
+    //初期化
+    init: function(x, y, speed, color) {
+        this.superInit(color); //初期化のおまじない
+        this.origin.set(0.5, 0.5);
+        this.width = 100;
+        this.height = 200;
+        this.x = x;
+        this.y = y + 35;
+        this.speed = speed;
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        this.x += this.speed;
     },
 });
 
@@ -408,8 +445,9 @@ phina.define("MainScene", {
         if (app.frame % (ONE_SECOND_FPS) == 0) {
             var rand = getRandomInt(2);
             if (rand <= 0) { // 1/2で、風船の追加
-                var tampBalloon = Balloon({});
-                tampBalloon.addChildTo(this.balloonGroup); //グループに追加する
+                var tempBalloon = Balloon({});
+                tempBalloon.addChildTo(this.balloonGroup); //グループに追加する
+                BalloonSprite(tempBalloon.x + tempBalloon.width / 2 + 5, tempBalloon.y - tempBalloon.height / 2 - 5, tempBalloon.speed, tempBalloon.balloonColor).addChildTo(this);
             } else { // 1/2でトゲトゲの追加
                 var rand2 = getRandomInt(2);
                 if (rand2 <= 0) { // 1/2でトゲトゲだけ追加
@@ -426,6 +464,7 @@ phina.define("MainScene", {
                     var balloonY = getRandomIntMinMax(MIN_NEKO_HEIGHT, tempTogetoge.y);
                     tempBalloon.y = balloonY;
                     tempBalloon.addChildTo(this.balloonGroup); //グループに追加する
+                    BalloonSprite(tempBalloon.x + tempBalloon.width / 2 + 5, tempBalloon.y - tempBalloon.height / 2 - 5, tempBalloon.speed, tempBalloon.balloonColor).addChildTo(this);
                 }
             }
 
