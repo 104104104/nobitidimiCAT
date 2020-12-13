@@ -416,12 +416,6 @@ phina.define("MainScene", {
 
         this.backgroundColor = '#1ee'; // 背景色
 
-        //score表示用Labelを、シーンに追加
-        ScoreLabel({}).addChildTo(this);
-
-        //GAMEOVER表示用Labelを、シーンに追加
-        this.gameoverLavel = GameoverLabel({}).addChildTo(this);
-
         //Catの生成
 
         this.catHit = CatHit({}).addChildTo(this); //当たり判定部分
@@ -445,6 +439,15 @@ phina.define("MainScene", {
         backGrass3.x = DISPLAY_WIDTH * 2;
 
         this.balloonSpriteGroup = DisplayElement().addChildTo(this);
+
+        this.togetogeSpriteGroup = DisplayElement().addChildTo(this);
+
+
+        //score表示用Labelを、シーンに追加
+        ScoreLabel({}).addChildTo(this);
+
+        //GAMEOVER表示用Labelを、シーンに追加
+        this.gameoverLavel = GameoverLabel({}).addChildTo(this);
     },
 
 
@@ -463,12 +466,12 @@ phina.define("MainScene", {
                 if (rand2 <= 0) { // 1/2でトゲトゲだけ追加
                     var tempTogetoge = Togetoge({});
                     tempTogetoge.addChildTo(this.togetogeGroup); //グループに追加する
-                    TogetogeSprite(tempTogetoge.x + tempTogetoge.width / 2 + 5, tempTogetoge.y - tempTogetoge.height / 2 - 5, tempTogetoge.speed).addChildTo(this);
+                    TogetogeSprite(tempTogetoge.x + tempTogetoge.width / 2 + 5, tempTogetoge.y - tempTogetoge.height / 2 - 5, tempTogetoge.speed).addChildTo(this.togetogeSpriteGroup);
 
                 } else { // 1/2で、トゲトゲと風船を追加
                     var tempTogetoge = Togetoge({});
                     tempTogetoge.addChildTo(this.togetogeGroup); //グループに追加する
-                    TogetogeSprite(tempTogetoge.x + tempTogetoge.width / 2 + 5, tempTogetoge.y - tempTogetoge.height / 2 - 5, tempTogetoge.speed).addChildTo(this);
+                    TogetogeSprite(tempTogetoge.x + tempTogetoge.width / 2 + 5, tempTogetoge.y - tempTogetoge.height / 2 - 5, tempTogetoge.speed).addChildTo(this.togetogeSpriteGroup);
 
                     var tempBalloon = Balloon({});
                     var balloonY = getRandomIntMinMax(MIN_NEKO_HEIGHT, tempTogetoge.y + 70); //トゲト風船が近すぎないよう、70たす
