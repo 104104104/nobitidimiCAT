@@ -40,6 +40,7 @@ var ASSETS = {
         'body': './body.PNG',
         'foot': './foot.PNG',
         'grass': './grass.PNG',
+        'grassBack': './grassBack.PNG',
     },
 };
 
@@ -256,13 +257,43 @@ phina.define('Grass', {
 
         this.fill = 'green'; // 四角の塗りつぶし色
         this.stroke = 'green'; // 四角のふちの色
-        this.width = 50; //四角の縦幅
-        this.height = 50; //四角の横幅
+        this.width = 40; //四角の縦幅
+        this.height = 40; //四角の横幅
     },
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
         var speed = -3;
+        this.x += speed;
+    },
+});
+
+/*
+ * 背景の草
+ */
+phina.define('BackGrass', {
+    superClass: 'Sprite',
+
+    //初期化
+    init: function(options) {
+        this.superInit('grassBack'); //初期化のおまじない
+
+        this.origin.set(0, 0); //右上を原点に
+
+        //this.fill = 'green'; // 四角の塗りつぶし色
+        //this.stroke = 'green'; // 四角のふちの色
+        this.y = GROUND_HEIGHT - 30;
+        //this.y = 0;
+        this.x = 0;
+        //this.width = 50; //四角の縦幅
+        //this.height = 50; //四角の横幅
+        this.width = DISPLAY_WIDTH;
+        this.height = 350;
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        var speed = -1;
         this.x += speed;
     },
 });
@@ -346,6 +377,13 @@ phina.define("MainScene", {
         this.balloonGroup = DisplayElement().addChildTo(this);
         this.togetogeGroup = DisplayElement().addChildTo(this);
         this.grassGroup = DisplayElement().addChildTo(this);
+
+        this.backGrassGroup = DisplayElement().addChildTo(this);
+        BackGrass({}).addChildTo(this.backGrassGroup);
+        var backGrass2 = BackGrass({}).addChildTo(this.backGrassGroup);
+        backGrass2.x = DISPLAY_WIDTH;
+        var backGrass3 = BackGrass({}).addChildTo(this.backGrassGroup);
+        backGrass3.x = DISPLAY_WIDTH * 2;
     },
 
 
@@ -380,6 +418,13 @@ phina.define("MainScene", {
                 tempGrass.y = GROUND_HEIGHT;
                 tempGrass.addChildTo(this.grassGroup); //グループに追加する
             }
+
+        }
+        //無限ループ用、背景の草の追加
+        if (this.backGrassGroup.children[0].x + this.backGrassGroup.children[0].width == 0) {
+            var backGrass = BackGrass({}).addChildTo(this.backGrassGroup);
+            backGrass.x = DISPLAY_WIDTH * 2;
+            this.backGrassGroup.children[0].remove();
         }
 
         //当たり判定
@@ -406,14 +451,14 @@ phina.define("MainScene", {
         //風船をとり逃した判定
         for (let oneBalloon of this.balloonGroup.children) {
             if (oneBalloon.x < this.catGroup.children[0].x && oneBalloon.beforNekoFrug) {
-                console.log('torinogashi');
+                //console.log('torinogashi');
                 SCORE_MUL = 1;
                 oneBalloon.beforNekoFrug = false;
             }
         }
 
         //猫の頭と体の間の距離を計算
-        console.log(HEAD_BETWEEN_FOOT);
+        //console.log(HEAD_BETWEEN_FOOT);
         HEAD_BETWEEN_FOOT = this.catGroup.children[1].y - (this.catGroup.children[2].y + this.catGroup.children[2].height) + 150;
     },
 
