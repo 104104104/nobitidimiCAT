@@ -36,9 +36,9 @@ var SCORE_MUL = 1;
 var ASSETS = {
     image: {
         'catWalk1': './catWalk.GIF',
-        'head': './head2.PNG',
-        'body': './body2.PNG',
-        'foot': './foot2.PNG',
+        'head': './head.PNG',
+        'body': './body.PNG',
+        'foot': './foot.PNG',
     },
 };
 
