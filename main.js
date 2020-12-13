@@ -7,7 +7,6 @@ phina.globalize(); // おまじない(phina.jsをグローバルに展開)
 
 // 定数
 const CAT_HEIGHT = 200;
-const CAT_ATARI_HEAD = CAT_HEIGHT - 20;
 const CAT_WIDTH = 200;
 
 const CAT_LEFT = 50;
@@ -60,16 +59,19 @@ phina.define('CatHit', {
 
         this.origin.set(0, 1); //左下を原点に
 
+        this.catAtariHead = CAT_HEIGHT - 20;
+
         this.fill = 'red'; // 四角の塗りつぶし色
         this.stroke = 'red'; // 四角のふちの色
         this.alpha = 0;
         this.width = CAT_WIDTH - 150; //四角の縦幅
-        this.height = CAT_ATARI_HEAD; //四角の横幅
+        this.height = this.catAtariHead; //四角の横幅
         this.x = CAT_LEFT + 70;
         this.y = GROUND_HEIGHT;
 
         this.expandSpeed = 0;
         this.shrinkSpeed = 0;
+
     },
 
     //毎フレームごとに、どうふるまうか
@@ -84,11 +86,11 @@ phina.define('CatHit', {
             }
         } else {
             EXPAND_SPEED = 0;
-            if (this.height > CAT_ATARI_HEAD) {
+            if (this.height > this.catAtariHead) {
                 this.height -= SHRINK_SPEED;
                 SHRINK_SPEED += 100;
             } else {
-                this.height = CAT_ATARI_HEAD;
+                this.height = this.catAtariHead;
                 SHRINK_SPEED = 0;
             }
         }
@@ -213,7 +215,7 @@ phina.define('Balloon', {
 
 
 /*
- * トゲトゲ
+ * トゲトゲ当たり判定部分
  */
 phina.define('Togetoge', {
     superClass: 'RectangleShape',
@@ -228,14 +230,41 @@ phina.define('Togetoge', {
         this.stroke = 'black'; // 四角のふちの色
         this.x = DISPLAY_WIDTH;
         this.y = MAX_NEKO_HEIGHT + getRandomInt(MIN_NEKO_HEIGHT - MAX_NEKO_HEIGHT);
-        this.width = 20; //四角の縦幅
-        this.height = 20; //四角の横幅
+        this.width = 70; //四角の縦幅
+        this.height = 70; //四角の横幅
+
+        this.alpha = 0;
+
+        this.speed = -3;
     },
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        var speed = -3;
-        this.x += speed;
+        this.x += this.speed;
+    },
+});
+
+
+/*
+ * トゲトゲの画像部分
+ */
+phina.define('TogetogeSprite', {
+    superClass: 'Sprite',
+
+    //初期化
+    init: function(x, y, speed) {
+        this.superInit('togetoge'); //初期化のおまじない
+        this.origin.set(0.5, 0.5);
+        this.width = 150;
+        this.height = 150;
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        this.x += this.speed;
     },
 });
 
@@ -384,11 +413,14 @@ phina.define("MainScene", {
             } else { // 1/2でトゲトゲの追加
                 var rand2 = getRandomInt(2);
                 if (rand2 <= 0) { // 1/2でトゲトゲだけ追加
-                    var tampTogetoge = Togetoge({});
-                    tampTogetoge.addChildTo(this.togetogeGroup); //グループに追加する
+                    var tempTogetoge = Togetoge({});
+                    tempTogetoge.addChildTo(this.togetogeGroup); //グループに追加する
+                    TogetogeSprite(tempTogetoge.x + tempTogetoge.width / 2 + 5, tempTogetoge.y - tempTogetoge.height / 2 - 5, tempTogetoge.speed).addChildTo(this);
+
                 } else { // 1/2で、トゲトゲと風船を追加
                     var tempTogetoge = Togetoge({});
                     tempTogetoge.addChildTo(this.togetogeGroup); //グループに追加する
+                    TogetogeSprite(tempTogetoge.x + tempTogetoge.width / 2 + 5, tempTogetoge.y - tempTogetoge.height / 2 - 5, tempTogetoge.speed).addChildTo(this);
 
                     var tempBalloon = Balloon({});
                     var balloonY = getRandomIntMinMax(MIN_NEKO_HEIGHT, tempTogetoge.y);
