@@ -39,6 +39,7 @@ var ASSETS = {
         'head': './head.PNG',
         'body': './body.PNG',
         'foot': './foot.PNG',
+        'grass': './grass.PNG',
     },
 };
 
@@ -245,18 +246,18 @@ phina.define('Togetoge', {
  * 画面下部の草
  */
 phina.define('Grass', {
-    superClass: 'RectangleShape',
+    superClass: 'Sprite',
 
     //初期化
     init: function(options) {
-        this.superInit(); //初期化のおまじない
+        this.superInit('grass'); //初期化のおまじない
 
         this.origin.set(0, 1); //左下を原点に
 
         this.fill = 'green'; // 四角の塗りつぶし色
         this.stroke = 'green'; // 四角のふちの色
-        this.width = 10; //四角の縦幅
-        this.height = 20; //四角の横幅
+        this.width = 50; //四角の縦幅
+        this.height = 50; //四角の横幅
     },
 
     //毎フレームごとに、どうふるまうか
@@ -372,10 +373,13 @@ phina.define("MainScene", {
             }
 
             //草の追加
-            var tempGrass = Grass({});
-            tempGrass.x = DISPLAY_WIDTH;
-            tempGrass.y = GROUND_HEIGHT;
-            tempGrass.addChildTo(this.grassGroup); //グループに追加する
+            var rand = getRandomInt(2);
+            if (rand <= 0) { // 1/2で、草の追加
+                var tempGrass = Grass({});
+                tempGrass.x = DISPLAY_WIDTH;
+                tempGrass.y = GROUND_HEIGHT;
+                tempGrass.addChildTo(this.grassGroup); //グループに追加する
+            }
         }
 
         //当たり判定
