@@ -6,25 +6,46 @@ phina.globalize(); // おまじない(phina.jsをグローバルに展開)
 
 
 // 定数
-const RECTANGLE_DIAMETER = 60; // 正方形の一辺の長さ
+const CAT_HEIGHT = 200;
+const CAT_ATARI_HEAD = CAT_HEIGHT - 30;
+const CAT_WIDTH = 200;
+
+const CAT_LEFT = 50;
+
 const DISPLAY_WIDTH = 640; // ゲーム画面の横幅
 const DISPLAY_HEIGHT = 960; // ゲーム画面の縦幅
 const ONE_SECOND_FPS = 30; //ゲーム画面を、一秒間に何回更新するか
 
 const MAX_NEKO_HEIGHT = DISPLAY_HEIGHT / 10;
 const GROUND_HEIGHT = DISPLAY_HEIGHT - DISPLAY_HEIGHT / 5;
-const MIN_NEKO_HEIGHT = GROUND_HEIGHT - RECTANGLE_DIAMETER;
+const MIN_NEKO_HEIGHT = GROUND_HEIGHT - CAT_HEIGHT;
 
 var SPACE_DOWN_FRAG = false;
+
+var EXPAND_SPEED = 0;
+var SHRINK_SPEED = 0;
 
 var SCORE = 0;
 var SCORE_MUL = 1;
 
 
+
+//画像
+var ASSETS = {
+    image: {
+        'catWalk1': './catWalk.GIF',
+        'head': './head.PNG',
+        'body': './body.PNG',
+        'foot': './foot.PNG',
+    },
+};
+
+
 /*
  * ねこの定義
  */
-phina.define('Cat', {
+
+phina.define('CatHit', {
     superClass: 'RectangleShape',
 
     //初期化
@@ -35,9 +56,10 @@ phina.define('Cat', {
 
         this.fill = 'red'; // 四角の塗りつぶし色
         this.stroke = 'red'; // 四角のふちの色
-        this.width = RECTANGLE_DIAMETER; //四角の縦幅
-        this.height = RECTANGLE_DIAMETER; //四角の横幅
-        this.x = 100;
+        this.alpha = 0;
+        this.width = CAT_WIDTH - 150; //四角の縦幅
+        this.height = CAT_ATARI_HEAD; //四角の横幅
+        this.x = CAT_LEFT + 70;
         this.y = GROUND_HEIGHT;
 
         this.expandSpeed = 0;
@@ -48,23 +70,117 @@ phina.define('Cat', {
     update: function(app) {
         if (SPACE_DOWN_FRAG) {
             if (MAX_NEKO_HEIGHT < this.y - this.height) {
-                this.height += this.expandSpeed;
+                this.height += EXPAND_SPEED;
             }
+            //EXPAND_SPEEDの加算は、ここで行う。
             if (app.frame % Math.floor(ONE_SECOND_FPS / 8) == 0) {
-                this.expandSpeed += 5;
+                EXPAND_SPEED += 5;
             }
         } else {
-            this.expandSpeed = 0;
-            if (this.height > RECTANGLE_DIAMETER) {
-                this.height -= this.shrinkSpeed;
-                this.shrinkSpeed += 100;
+            EXPAND_SPEED = 0;
+            if (this.height > CAT_ATARI_HEAD) {
+                this.height -= SHRINK_SPEED;
+                SHRINK_SPEED += 100;
             } else {
-                this.height = RECTANGLE_DIAMETER;
-                this.shrinkSpeed = 0;
+                this.height = CAT_ATARI_HEAD;
+                SHRINK_SPEED = 0;
             }
         }
     },
 });
+
+
+//猫の頭
+phina.define('CatHead', {
+    superClass: 'Sprite',
+
+    //初期化
+    init: function(options) {
+        this.superInit('head'); //初期化のおまじない
+
+        this.origin.set(0, 1); //左下を原点に
+        //this.height = RECTANGLE_DIAMETER; //四角の横幅
+        this.height = CAT_HEIGHT;
+        this.width = CAT_WIDTH;
+        this.x = CAT_LEFT;
+        this.y = DISPLAY_HEIGHT;
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        if (SPACE_DOWN_FRAG) {
+            //console.log(MAX_NEKO_HEIGHT, this.y);
+            if (MAX_NEKO_HEIGHT < this.y - this.height) {
+                this.y -= EXPAND_SPEED;
+            }
+        } else {
+            EXPAND_SPEED = 0;
+            if (this.height > CAT_HEIGHT) {
+                this.y -= SHRINK_SPEED;
+                SHRINK_SPEED += 100;
+            } else {
+                this.y = GROUND_HEIGHT;
+                //SHRINK_SPEED = 0;
+            }
+        }
+    },
+});
+
+//猫の体
+phina.define('CatBody', {
+    superClass: 'Sprite',
+
+    //初期化
+    init: function(options) {
+        this.superInit('body'); //初期化のおまじない
+
+        this.origin.set(0, 1); //左上を原点に
+        this.height = CAT_HEIGHT;
+        this.width = CAT_WIDTH;
+        this.x = CAT_LEFT;
+        this.y = GROUND_HEIGHT;
+    },
+
+    //毎フレームごとに、どうふるまうか
+    update: function(app) {
+        console.log(this.height);
+        if (SPACE_DOWN_FRAG) {
+            if (MAX_NEKO_HEIGHT < this.y) {
+                this.height += EXPAND_SPEED;
+            }
+        } else {
+            EXPAND_SPEED = 0;
+            console.log(this.height, CAT_HEIGHT);
+            if (this.height > CAT_HEIGHT) {
+                console.log('OK', );
+                this.height -= SHRINK_SPEED;
+                SHRINK_SPEED += 100;
+            } else {
+                this.height = CAT_HEIGHT;
+                //SHRINK_SPEED = 0;
+            }
+        }
+    },
+
+});
+
+//猫の足
+phina.define('CatFoot', {
+    superClass: 'Sprite',
+
+    //初期化
+    init: function(options) {
+        this.superInit('foot'); //初期化のおまじない
+
+        this.origin.set(0, 1); //左上を原点に
+        this.height = CAT_HEIGHT;
+        this.width = CAT_WIDTH;
+        this.x = CAT_LEFT;
+        this.y = GROUND_HEIGHT;
+    }
+});
+
+
 
 /*
  * 風船
@@ -219,10 +335,16 @@ phina.define("MainScene", {
 
         //GAMEOVER表示用Labelを、シーンに追加
         this.gameoverLavel = GameoverLabel({}).addChildTo(this);
-        console.log(this.gameoverLavel);
 
         //Catの生成
-        this.cat = Cat({}).addChildTo(this);
+
+        this.catHit = CatHit({}).addChildTo(this); //当たり判定部分
+
+        this.catGroup = DisplayElement().addChildTo(this);
+        CatHead({}).addChildTo(this.catGroup);
+        CatBody({}).addChildTo(this.catGroup);
+        CatFoot({}).addChildTo(this.catGroup);
+
 
         // グループを生成
         this.balloonGroup = DisplayElement().addChildTo(this);
@@ -265,7 +387,7 @@ phina.define("MainScene", {
 
         //風船と猫の当たり判定
         for (let oneBalloon of this.balloonGroup.children) {
-            if (oneBalloon.hitTestElement(this.cat)) {
+            if (oneBalloon.hitTestElement(this.catHit)) {
                 //console.log('hit!')
                 oneBalloon.removeBalloon();
             }
@@ -273,16 +395,18 @@ phina.define("MainScene", {
 
         //トゲトゲと猫と当たり判定
         for (let oneTogetoge of this.togetogeGroup.children) {
-            if (oneTogetoge.hitTestElement(this.cat)) {
+            if (oneTogetoge.hitTestElement(this.catHit)) {
                 console.log('GAME OVER!');
                 this.gameoverLavel.show();
-                this.cat.hide();
+                for (let tempCat of this.catGroup.children) {
+                    tempCat.hide();
+                }
             }
         }
 
         //風船をとり逃した判定
         for (let oneBalloon of this.balloonGroup.children) {
-            if (oneBalloon.x < this.cat.x && oneBalloon.beforNekoFrug) {
+            if (oneBalloon.x < this.catGroup.children[0].x && oneBalloon.beforNekoFrug) {
                 console.log('torinogashi');
                 SCORE_MUL = 1;
                 oneBalloon.beforNekoFrug = false;
@@ -299,7 +423,6 @@ phina.define("MainScene", {
         }
         //スペースキーが押されると、伸びる
         if (e.keyCode === 32) { //32はスペース
-            //console.log('PRESS SPACE');
             SPACE_DOWN_FRAG = true;
         }
     },
@@ -323,6 +446,7 @@ phina.main(function() {
         width: DISPLAY_WIDTH, //画面の横幅
         height: DISPLAY_HEIGHT, //画面の縦幅
         fps: ONE_SECOND_FPS, //毎秒何回画面を更新するかの設定。
+        assets: ASSETS,
     });
 
     // 実行
