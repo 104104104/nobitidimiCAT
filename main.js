@@ -7,7 +7,7 @@ phina.globalize(); // おまじない(phina.jsをグローバルに展開)
 
 // 定数
 const CAT_HEIGHT = 200;
-const CAT_ATARI_HEAD = CAT_HEIGHT - 30;
+const CAT_ATARI_HEAD = CAT_HEIGHT - 20;
 const CAT_WIDTH = 200;
 
 const CAT_LEFT = 50;
@@ -25,6 +25,8 @@ var SPACE_DOWN_FRAG = false;
 var EXPAND_SPEED = 0;
 var SHRINK_SPEED = 0;
 
+var HEAD_BETWEEN_FOOT = 0;
+
 var SCORE = 0;
 var SCORE_MUL = 1;
 
@@ -34,9 +36,9 @@ var SCORE_MUL = 1;
 var ASSETS = {
     image: {
         'catWalk1': './catWalk.GIF',
-        'head': './head.PNG',
-        'body': './body.PNG',
-        'foot': './foot.PNG',
+        'head': './head2.PNG',
+        'body': './body2.PNG',
+        'foot': './foot2.PNG',
     },
 };
 
@@ -100,10 +102,13 @@ phina.define('CatHead', {
 
         this.origin.set(0, 1); //左下を原点に
         //this.height = RECTANGLE_DIAMETER; //四角の横幅
-        this.height = CAT_HEIGHT;
+        this.height = CAT_HEIGHT / 2;
         this.width = CAT_WIDTH;
         this.x = CAT_LEFT;
-        this.y = DISPLAY_HEIGHT;
+
+        this.catHaedOroginY = GROUND_HEIGHT - CAT_HEIGHT + this.height;
+
+        this.y = this.catHaedOroginY;
     },
 
     //毎フレームごとに、どうふるまうか
@@ -119,7 +124,7 @@ phina.define('CatHead', {
                 this.y -= SHRINK_SPEED;
                 SHRINK_SPEED += 100;
             } else {
-                this.y = GROUND_HEIGHT;
+                this.y = this.catHaedOroginY;
                 //SHRINK_SPEED = 0;
             }
         }
@@ -134,31 +139,21 @@ phina.define('CatBody', {
     init: function(options) {
         this.superInit('body'); //初期化のおまじない
 
-        this.origin.set(0, 1); //左上を原点に
-        this.height = CAT_HEIGHT;
+        this.origin.set(0, 0); //左下を原点に
+        this.height = HEAD_BETWEEN_FOOT;
         this.width = CAT_WIDTH;
         this.x = CAT_LEFT;
-        this.y = GROUND_HEIGHT;
+        this.y = GROUND_HEIGHT - CAT_HEIGHT / 2;
+
+        //this.hide();
     },
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        console.log(this.height);
         if (SPACE_DOWN_FRAG) {
-            if (MAX_NEKO_HEIGHT < this.y) {
-                this.height += EXPAND_SPEED;
-            }
+            this.height = HEAD_BETWEEN_FOOT;
         } else {
-            EXPAND_SPEED = 0;
-            console.log(this.height, CAT_HEIGHT);
-            if (this.height > CAT_HEIGHT) {
-                console.log('OK', );
-                this.height -= SHRINK_SPEED;
-                SHRINK_SPEED += 100;
-            } else {
-                this.height = CAT_HEIGHT;
-                //SHRINK_SPEED = 0;
-            }
+            this.height = 0;
         }
     },
 
@@ -173,7 +168,7 @@ phina.define('CatFoot', {
         this.superInit('foot'); //初期化のおまじない
 
         this.origin.set(0, 1); //左上を原点に
-        this.height = CAT_HEIGHT;
+        this.height = CAT_HEIGHT / 2;
         this.width = CAT_WIDTH;
         this.x = CAT_LEFT;
         this.y = GROUND_HEIGHT;
@@ -341,8 +336,8 @@ phina.define("MainScene", {
         this.catHit = CatHit({}).addChildTo(this); //当たり判定部分
 
         this.catGroup = DisplayElement().addChildTo(this);
-        CatHead({}).addChildTo(this.catGroup);
         CatBody({}).addChildTo(this.catGroup);
+        CatHead({}).addChildTo(this.catGroup);
         CatFoot({}).addChildTo(this.catGroup);
 
 
@@ -411,8 +406,11 @@ phina.define("MainScene", {
                 SCORE_MUL = 1;
                 oneBalloon.beforNekoFrug = false;
             }
-
         }
+
+        //猫の頭と体の間の距離を計算
+        console.log(HEAD_BETWEEN_FOOT);
+        HEAD_BETWEEN_FOOT = this.catGroup.children[1].y - (this.catGroup.children[2].y + this.catGroup.children[2].height) + 150;
     },
 
     onkeydown: function(e) {
