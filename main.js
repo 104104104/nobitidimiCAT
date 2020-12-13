@@ -41,6 +41,8 @@ var ASSETS = {
         'foot': './foot.PNG',
         'grass': './grass.PNG',
         'grassBack': './grassBack.PNG',
+
+        'togetoge': './togetoge.PNG',
     },
 };
 
@@ -103,7 +105,6 @@ phina.define('CatHead', {
         this.superInit('head'); //初期化のおまじない
 
         this.origin.set(0, 1); //左下を原点に
-        //this.height = RECTANGLE_DIAMETER; //四角の横幅
         this.height = CAT_HEIGHT / 2;
         this.width = CAT_WIDTH;
         this.x = CAT_LEFT;
@@ -116,7 +117,6 @@ phina.define('CatHead', {
     //毎フレームごとに、どうふるまうか
     update: function(app) {
         if (SPACE_DOWN_FRAG) {
-            //console.log(MAX_NEKO_HEIGHT, this.y);
             if (MAX_NEKO_HEIGHT < this.y - this.height) {
                 this.y -= EXPAND_SPEED;
             }
@@ -127,7 +127,6 @@ phina.define('CatHead', {
                 SHRINK_SPEED += 100;
             } else {
                 this.y = this.catHaedOroginY;
-                //SHRINK_SPEED = 0;
             }
         }
     },
@@ -146,8 +145,6 @@ phina.define('CatBody', {
         this.width = CAT_WIDTH;
         this.x = CAT_LEFT;
         this.y = GROUND_HEIGHT - CAT_HEIGHT / 2;
-
-        //this.hide();
     },
 
     //毎フレームごとに、どうふるまうか
@@ -252,11 +249,7 @@ phina.define('Grass', {
     //初期化
     init: function(options) {
         this.superInit('grass'); //初期化のおまじない
-
         this.origin.set(0, 1); //左下を原点に
-
-        this.fill = 'green'; // 四角の塗りつぶし色
-        this.stroke = 'green'; // 四角のふちの色
         this.width = 40; //四角の縦幅
         this.height = 40; //四角の横幅
     },
@@ -279,14 +272,8 @@ phina.define('BackGrass', {
         this.superInit('grassBack'); //初期化のおまじない
 
         this.origin.set(0, 0); //右上を原点に
-
-        //this.fill = 'green'; // 四角の塗りつぶし色
-        //this.stroke = 'green'; // 四角のふちの色
         this.y = GROUND_HEIGHT - 30;
-        //this.y = 0;
         this.x = 0;
-        //this.width = 50; //四角の縦幅
-        //this.height = 50; //四角の横幅
         this.width = DISPLAY_WIDTH;
         this.height = 350;
     },
@@ -432,7 +419,6 @@ phina.define("MainScene", {
         //風船と猫の当たり判定
         for (let oneBalloon of this.balloonGroup.children) {
             if (oneBalloon.hitTestElement(this.catHit)) {
-                //console.log('hit!')
                 oneBalloon.removeBalloon();
             }
         }
@@ -451,14 +437,12 @@ phina.define("MainScene", {
         //風船をとり逃した判定
         for (let oneBalloon of this.balloonGroup.children) {
             if (oneBalloon.x < this.catGroup.children[0].x && oneBalloon.beforNekoFrug) {
-                //console.log('torinogashi');
                 SCORE_MUL = 1;
                 oneBalloon.beforNekoFrug = false;
             }
         }
 
         //猫の頭と体の間の距離を計算
-        //console.log(HEAD_BETWEEN_FOOT);
         HEAD_BETWEEN_FOOT = this.catGroup.children[1].y - (this.catGroup.children[2].y + this.catGroup.children[2].height) + 150;
     },
 
@@ -476,7 +460,6 @@ phina.define("MainScene", {
 
     onkeyup: function(e) { //スペースキーが話されると、縮む
         if (e.keyCode === 32) { //32はスペース
-            //console.log('ESC SPACE');
             SPACE_DOWN_FRAG = false;
         }
     },
