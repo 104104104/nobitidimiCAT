@@ -200,6 +200,8 @@ phina.define('Balloon', {
         this.width = 80; //四角の縦幅
         this.height = 80; //四角の横幅
 
+        this.alpha = 0;
+
         this.beforNekoFrug = true;
 
         this.balloonColor = '';
@@ -248,6 +250,10 @@ phina.define('BalloonSprite', {
     update: function(app) {
         this.x += this.speed;
     },
+
+    removeMe: function() {
+        this.remove();
+    }
 });
 
 
@@ -322,7 +328,7 @@ phina.define('Grass', {
 
     //毎フレームごとに、どうふるまうか
     update: function(app) {
-        var speed = -3;
+        var speed = -2;
         this.x += speed;
     },
 });
@@ -437,17 +443,21 @@ phina.define("MainScene", {
         backGrass2.x = DISPLAY_WIDTH;
         var backGrass3 = BackGrass({}).addChildTo(this.backGrassGroup);
         backGrass3.x = DISPLAY_WIDTH * 2;
+
+        this.balloonSpriteGroup = DisplayElement().addChildTo(this);
     },
 
 
     //毎フレームごとに、どう振る舞うか
     update: function(app) {
-        if (app.frame % (ONE_SECOND_FPS) == 0) {
+
+        //1秒強に一回、風船かトゲトゲ追加
+        if (app.frame % (ONE_SECOND_FPS + 5) == 0) {
             var rand = getRandomInt(2);
             if (rand <= 0) { // 1/2で、風船の追加
                 var tempBalloon = Balloon({});
                 tempBalloon.addChildTo(this.balloonGroup); //グループに追加する
-                BalloonSprite(tempBalloon.x + tempBalloon.width / 2 + 5, tempBalloon.y - tempBalloon.height / 2 - 5, tempBalloon.speed, tempBalloon.balloonColor).addChildTo(this);
+                BalloonSprite(tempBalloon.x + tempBalloon.width / 2 + 5, tempBalloon.y - tempBalloon.height / 2 - 5, tempBalloon.speed, tempBalloon.balloonColor).addChildTo(this.balloonSpriteGroup);
             } else { // 1/2でトゲトゲの追加
                 var rand2 = getRandomInt(2);
                 if (rand2 <= 0) { // 1/2でトゲトゲだけ追加
@@ -461,10 +471,10 @@ phina.define("MainScene", {
                     TogetogeSprite(tempTogetoge.x + tempTogetoge.width / 2 + 5, tempTogetoge.y - tempTogetoge.height / 2 - 5, tempTogetoge.speed).addChildTo(this);
 
                     var tempBalloon = Balloon({});
-                    var balloonY = getRandomIntMinMax(MIN_NEKO_HEIGHT, tempTogetoge.y);
+                    var balloonY = getRandomIntMinMax(MIN_NEKO_HEIGHT, tempTogetoge.y + 70); //トゲト風船が近すぎないよう、70たす
                     tempBalloon.y = balloonY;
                     tempBalloon.addChildTo(this.balloonGroup); //グループに追加する
-                    BalloonSprite(tempBalloon.x + tempBalloon.width / 2 + 5, tempBalloon.y - tempBalloon.height / 2 - 5, tempBalloon.speed, tempBalloon.balloonColor).addChildTo(this);
+                    BalloonSprite(tempBalloon.x + tempBalloon.width / 2 + 5, tempBalloon.y - tempBalloon.height / 2 - 5, tempBalloon.speed, tempBalloon.balloonColor).addChildTo(this.balloonSpriteGroup);
                 }
             }
 
@@ -490,7 +500,20 @@ phina.define("MainScene", {
         //風船と猫の当たり判定
         for (let oneBalloon of this.balloonGroup.children) {
             if (oneBalloon.hitTestElement(this.catHit)) {
+                //当たり判定から、一番近いSpriteを消す
+                var min = 1000000;
+                var minID = -1;
+                var i = 0;
+                for (let oneBalloonSprite of this.balloonSpriteGroup.children) {
+                    var length = (oneBalloonSprite.x - oneBalloon.x) ** 2 + (oneBalloonSprite.y - oneBalloon.y) ** 2;
+                    if (length < min) {
+                        min = length;
+                        minID = i;
+                    }
+                    i++;
+                }
                 oneBalloon.removeBalloon();
+                this.balloonSpriteGroup.children[minID].removeMe();
             }
         }
 
